@@ -14,6 +14,14 @@
         <!-- Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        <style>
+            .dt-layout-row:has(.dt-search),
+            .dt-layout-row:has(.dt-length),
+            .dt-layout-row:has(.dt-paging) {
+              display: none !important;
+            }
+          </style>
+
         <!-- Additional Styles -->
         @stack('styles')
     </head>
@@ -23,40 +31,26 @@
             <aside class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full lg:translate-x-0">
                 <div class="h-full px-4 py-6 overflow-y-auto bg-white dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700">
                     <!-- Logo -->
-                    <div class="flex items-center justify-center mb-8">
+                    <div class="flex items-center justify-center mb-4">
                         <a href="#" class="flex items-center">
-                            <img src="{{ asset('images/logo.png') }}" class="h-8" alt="Logo">
+                            <img src="{{ asset('images/logo.png') }}" class="h-16 w-auto" alt="Logo">
                         </a>
                     </div>
 
                     <!-- Navigation -->
                     <nav class="space-y-2">
-                        <a href="#" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-700 rounded-lg bg-gray-100 dark:bg-neutral-700 dark:text-white dark:hover:bg-neutral-700">
+                        <a href="{{ route('dashboard') }}" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('dashboard') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
-                            Dashboard
+                            Tareas
                         </a>
-
-                        <a href="#" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300">
+                    
+                        <a href="{{ route('users.index') }}" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('users.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
-                            Users
-                        </a>
-
-                        <a href="#" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Analytics
-                        </a>
-
-                        <a href="#" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Calendar
+                            Usuarios
                         </a>
                     </nav>
                 </div>
@@ -77,14 +71,14 @@
 
                             <!-- Search Bar -->
                             <div class="hidden md:block flex-1 max-w-md ml-4">
-                                <div class="relative">
+                                {{-- <div class="relative">
                                     <input type="search" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-neutral-300" placeholder="Search...">
                                     <div class="absolute left-3 top-2.5">
                                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
                                     </div>
-                                </div>
+                                </div> --}}
                             </div>
 
                             <!-- Right Navigation Items -->

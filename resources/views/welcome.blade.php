@@ -27,18 +27,17 @@
 
     <body class="font-sans antialiased dark:bg-black dark:text-white/50">
         <div class="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">            
-            <main>
                 <!-- Navigation Header -->
-                <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full py-7">
+                <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full py-2">
                     <nav class="relative max-w-7xl w-full flex flex-wrap md:grid md:grid-cols-12 basis-full items-center px-4 md:px-6 md:px-8 mx-auto">
                         <!-- Logo Section -->
                         <div class="md:col-span-3">
-                            <a class="flex-none rounded-xl text-xl inline-block font-semibold focus:outline-none focus:opacity-80" 
-                               href="#" 
-                               aria-label="Qualy">
-                                <img src="{{ asset('images/logo.png') }}" 
-                                     alt="Qualy Logo" 
-                                     class="w-32 md:w-40 lg:w-44 h-auto object-contain">
+                            <a class="flex-none rounded-xl text-xl inline-block font-semibold focus:outline-none focus:opacity-80"
+                                href="#"
+                                aria-label="Qualy">
+                                <img src="{{ asset('images/logo.png') }}"
+                                    alt="Qualy Logo"
+                                    class="w-40 md:w-48 lg:w-56 h-auto object-contain">
                             </a>
                         </div>
                         
@@ -98,23 +97,19 @@
                                 <div>
                                     <a class="relative inline-block text-black focus:outline-none before:absolute before:bottom-0.5 before:start-0 before:-z-[1] before:w-full before:h-1 before:bg-lime-400 dark:text-white" 
                                        href="#" 
-                                       aria-current="page">Work</a>
+                                       aria-current="page">Incio</a>
                                 </div>
                                 <div>
                                     <a class="inline-block text-black hover:text-gray-600 focus:outline-none focus:text-gray-600 dark:text-white dark:hover:text-neutral-300 dark:focus:text-neutral-300" 
-                                       href="#">Services</a>
+                                       href="#">Presentar una Prueva</a>
                                 </div>
                                 <div>
                                     <a class="inline-block text-black hover:text-gray-600 focus:outline-none focus:text-gray-600 dark:text-white dark:hover:text-neutral-300 dark:focus:text-neutral-300" 
-                                       href="#">About</a>
+                                       href="#">Sobre nosotros</a>
                                 </div>
                                 <div>
                                     <a class="inline-block text-black hover:text-gray-600 focus:outline-none focus:text-gray-600 dark:text-white dark:hover:text-neutral-300 dark:focus:text-neutral-300" 
-                                       href="#">Careers</a>
-                                </div>
-                                <div>
-                                    <a class="inline-block text-black hover:text-gray-600 focus:outline-none focus:text-gray-600 dark:text-white dark:hover:text-neutral-300 dark:focus:text-neutral-300" 
-                                       href="#">Blog</a>
+                                       href="#">Blogs</a>
                                 </div>
                             </div>
                         </div>
@@ -213,8 +208,19 @@
                         </div>
                     </div>
                 </header>
-            </main>
         </div>
+        <main class="relative overflow-hidden py-10 sm:py-16 lg:py-24">
+            <div class="relative z-10 text-center">
+                {{-- <div class="banner-container">
+                    <img src="{{ asset('images/logo.png') }}" alt="Banner" class="banner-image rounded-lg mb-8">
+                </div> --}}
+                <h2 class="font-bold text-gray-800 text-3xl sm:text-4xl md:text-5xl lg:text-6xl dark:text-neutral-200 mb-4">
+                    Gestor de Documentos
+                    <span class="block sm:inline bg-clip-text bg-gradient-to-tl from-blue-600 to-violet-600 text-transparent animate-pulse">Quality</span>
+                </h2>
+            </div>
+            <div class="absolute top-0 start-1/2 -z-10 size-full bg-[url('https://preline.co/assets/svg/examples/polygon-bg-element.svg')] dark:bg-[url('https://preline.co/assets/svg/examples-dark/polygon-bg-element.svg')] bg-no-repeat bg-top bg-cover transform -translate-x-1/2"></div>
+        </main>
 
         <!-- Scripts Section -->
         <script>

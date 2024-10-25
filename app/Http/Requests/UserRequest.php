@@ -27,6 +27,12 @@ class UserRequest extends FormRequest
             'password' => $this->isMethod('POST')
                 ? ['required', 'confirmed', Password::defaults()]
                 : ['nullable', 'confirmed', Password::defaults()],
+            'profile_photo' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif',
+                'max:2048' // 2MB máximo
+            ],
         ];
     }
 
@@ -39,6 +45,19 @@ class UserRequest extends FormRequest
             'email.unique' => 'Este correo electrónico ya está registrado.',
             'password.required' => 'La contraseña es obligatoria.',
             'password.confirmed' => 'La confirmación de la contraseña no coincide.',
+            'profile_photo.image' => 'El archivo debe ser una imagen.',
+            'profile_photo.mimes' => 'La imagen debe ser de tipo: jpeg, png, jpg, gif.',
+            'profile_photo.max' => 'La imagen no debe pesar más de 2MB.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => 'nombre',
+            'email' => 'correo electrónico',
+            'password' => 'contraseña',
+            'profile_photo' => 'foto de perfil',
         ];
     }
 }

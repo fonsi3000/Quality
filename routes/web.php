@@ -2,16 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\UserController; // Se añade el controlador User
 
-// Rutas públicas
+// Rutas públicas 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Ruta de login
+// Ruta de login 
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 
-// Rutas protegidas
+// Rutas protegidas 
 Route::middleware('auth')->group(function () {
     // Ruta de logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -20,4 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    // CRUD de Usuarios
+    Route::resource('users', UserController::class);
 });
