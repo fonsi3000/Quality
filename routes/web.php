@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\PositionController;
+use App\Http\Controllers\ProcessController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController; // Se añade el controlador User
 
 // Rutas públicas 
@@ -24,4 +27,8 @@ Route::middleware('auth')->group(function () {
 
     // CRUD de Usuarios
     Route::resource('users', UserController::class);
+
+    Route::resource('units', UnitController::class);
+    Route::resource('positions', PositionController::class);
+    Route::resource('processes', ProcessController::class);
 });
