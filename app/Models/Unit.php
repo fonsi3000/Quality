@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Unit extends Model
 {
@@ -17,4 +17,9 @@ class Unit extends Model
     protected $casts = [
         'active' => 'boolean'
     ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

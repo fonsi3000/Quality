@@ -63,7 +63,7 @@
 
                             <div id="organization-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
                                 <!-- Unidades Submenu -->
-                                <a href="#" 
+                                <a href="{{ route('units.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('units.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -72,7 +72,7 @@
                                 </a>
                             
                                 <!-- Cargos Submenu -->
-                                <a href="#" 
+                                <a href="{{ route('positions.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('positions.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -81,7 +81,7 @@
                                 </a>
                             
                                 <!-- Lista de procesos Submenu -->
-                                <a href="#" 
+                                <a href="{{ route('processes.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('processes.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -106,7 +106,7 @@
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             // Verificar si estamos en alguna ruta de organización
-                            const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('roles.*') ? 'true' : 'false' }};
+                            const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
                             
                             if (isOrganizationRoute) {
                                 // Obtener el acordeón y expandirlo

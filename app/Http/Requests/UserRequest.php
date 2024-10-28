@@ -33,6 +33,22 @@ class UserRequest extends FormRequest
                 'mimes:jpeg,png,jpg,gif',
                 'max:2048' // 2MB máximo
             ],
+            'unit_id' => [
+                'nullable',
+                'exists:units,id',
+            ],
+            'process_id' => [
+                'nullable',
+                'exists:processes,id',
+            ],
+            'position_id' => [
+                'nullable',
+                'exists:positions,id',
+            ],
+            'active' => [
+                'boolean',
+                'nullable'
+            ],
         ];
     }
 
@@ -48,6 +64,10 @@ class UserRequest extends FormRequest
             'profile_photo.image' => 'El archivo debe ser una imagen.',
             'profile_photo.mimes' => 'La imagen debe ser de tipo: jpeg, png, jpg, gif.',
             'profile_photo.max' => 'La imagen no debe pesar más de 2MB.',
+            'unit_id.exists' => 'La unidad seleccionada no es válida.',
+            'process_id.exists' => 'El proceso seleccionado no es válido.',
+            'position_id.exists' => 'El cargo seleccionado no es válido.',
+            'active.boolean' => 'El estado debe ser activo o inactivo.',
         ];
     }
 
@@ -58,6 +78,19 @@ class UserRequest extends FormRequest
             'email' => 'correo electrónico',
             'password' => 'contraseña',
             'profile_photo' => 'foto de perfil',
+            'unit_id' => 'unidad',
+            'process_id' => 'proceso',
+            'position_id' => 'cargo',
+            'active' => 'estado',
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        if ($this->has('active')) {
+            $this->merge([
+                'active' => filter_var($this->active, FILTER_VALIDATE_BOOLEAN)
+            ]);
+        }
     }
 }

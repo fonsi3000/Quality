@@ -27,7 +27,26 @@ class Authenticate
             return redirect('/');
         }
 
-        // Si el usuario está autenticado, permite que la solicitud continúe
+        // Verifica si el usuario está inactivo
+        if (!Auth::user()->active) {
+            // Cierra la sesión del usuario
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            // Si la solicitud espera JSON
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Tu cuenta está inactiva. Por favor, contacta al administrador.'
+                ], 403);
+            }
+
+            // Si es una solicitud web
+            return redirect('/')
+                ->with('error', 'Tu cuenta está inactiva. Por favor, contacta al administrador.');
+        }
+
+        // Si el usuario está autenticado y activo, permite que la solicitud continúe
         return $next($request);
     }
 }

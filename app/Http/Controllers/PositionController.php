@@ -7,59 +7,65 @@ use Illuminate\Http\Request;
 
 class PositionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $positions = Position::orderBy('created_at', 'desc')->get();
+        return view('positions.index', compact('positions'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('positions.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:positions',
+        ]);
+
+        // Aseguramos que active sea true por defecto
+        $validated['active'] = $request->has('active');
+
+        Position::create($validated);
+
+        return redirect()
+            ->route('positions.index')
+            ->with('success', 'Cargo creado exitosamente.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Position $position)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Position $position)
     {
-        //
+        return view('positions.edit', compact('position'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Position $position)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:positions,name,' . $position->id,
+        ]);
+
+        // Aseguramos que active sea false si no viene en el request
+        $validated['active'] = $request->has('active');
+
+        $position->update($validated);
+
+        return redirect()
+            ->route('positions.index')
+            ->with('success', 'Cargo actualizado exitosamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Position $position)
     {
-        //
+        try {
+            $position->delete();
+            $message = ['success' => 'Cargo eliminado exitosamente.'];
+        } catch (\Exception $e) {
+            $message = ['error' => 'No se puede eliminar el cargo porque está en uso.'];
+        }
+
+        return redirect()
+            ->route('positions.index')
+            ->with($message);
     }
 }

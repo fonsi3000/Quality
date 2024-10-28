@@ -28,6 +28,15 @@ class LoginController extends Controller
             ], 422);
         }
 
+        // Verificar si el usuario está activo
+        if (!$user->active) {
+            return response()->json([
+                'errors' => [
+                    'email' => ['Tu cuenta está inactiva. Por favor, contacta al administrador.']
+                ]
+            ], 422);
+        }
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 

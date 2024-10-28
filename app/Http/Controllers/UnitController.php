@@ -9,7 +9,8 @@ class UnitController extends Controller
 {
     public function index()
     {
-        $units = Unit::all();
+        // Ordenamos las unidades por fecha de creación descendente
+        $units = Unit::orderBy('created_at', 'desc')->get();
         return view('units.index', compact('units'));
     }
 
@@ -24,16 +25,14 @@ class UnitController extends Controller
             'name' => 'required|string|max:255|unique:units'
         ]);
 
+        // Establecemos active como true por defecto para nuevas unidades
+        $validated['active'] = true;
+
         Unit::create($validated);
 
         return redirect()
             ->route('units.index')
             ->with('success', 'Unidad creada exitosamente.');
-    }
-
-    public function show(Unit $unit)
-    {
-        return view('units.show', compact('unit'));
     }
 
     public function edit(Unit $unit)
@@ -48,6 +47,9 @@ class UnitController extends Controller
             'active' => 'boolean'
         ]);
 
+        // Aseguramos que active sea false si no viene en el request
+        $validated['active'] = $request->has('active');
+
         $unit->update($validated);
 
         return redirect()
@@ -57,10 +59,15 @@ class UnitController extends Controller
 
     public function destroy(Unit $unit)
     {
-        $unit->delete();
+        try {
+            $unit->delete();
+            $message = ['success' => 'Unidad eliminada exitosamente.'];
+        } catch (\Exception $e) {
+            $message = ['error' => 'No se puede eliminar la unidad porque está en uso.'];
+        }
 
         return redirect()
             ->route('units.index')
-            ->with('success', 'Unidad eliminada exitosamente.');
+            ->with($message);
     }
 }

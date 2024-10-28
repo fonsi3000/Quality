@@ -75,6 +75,69 @@
                 </div>
 
                 <div class="sm:col-span-3">
+                    <label for="unit_id" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
+                        Unidad
+                    </label>
+                </div>
+
+                <div class="sm:col-span-9">
+                    <select id="unit_id" name="unit_id" 
+                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600 @error('unit_id') border-red-500 @enderror">
+                        <option value="">Seleccione una unidad</option>
+                        @foreach($units as $unit)
+                            <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
+                                {{ $unit->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('unit_id')
+                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label for="process_id" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
+                        Proceso
+                    </label>
+                </div>
+
+                <div class="sm:col-span-9">
+                    <select id="process_id" name="process_id" 
+                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600 @error('process_id') border-red-500 @enderror">
+                        <option value="">Seleccione un proceso</option>
+                        @foreach($processes as $process)
+                            <option value="{{ $process->id }}" {{ old('process_id') == $process->id ? 'selected' : '' }}>
+                                {{ $process->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('process_id')
+                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label for="position_id" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
+                        Cargo
+                    </label>
+                </div>
+
+                <div class="sm:col-span-9">
+                    <select id="position_id" name="position_id" 
+                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600 @error('position_id') border-red-500 @enderror">
+                        <option value="">Seleccione un cargo</option>
+                        @foreach($positions as $position)
+                            <option value="{{ $position->id }}" {{ old('position_id') == $position->id ? 'selected' : '' }}>
+                                {{ $position->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('position_id')
+                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="sm:col-span-3">
                     <label for="password" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
                         Contraseña
                     </label>
@@ -99,6 +162,29 @@
                     <input id="password_confirmation" name="password_confirmation" type="password" 
                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600"
                            placeholder="********">
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label for="active" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
+                        Estado
+                    </label>
+                </div>
+
+                <div class="sm:col-span-9">
+                    <label class="flex items-center">
+                        <input type="checkbox" 
+                               name="active" 
+                               id="active" 
+                               class="relative w-[3.25rem] h-7 bg-gray-200 checked:bg-none checked:bg-blue-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 ring-1 ring-transparent focus:border-blue-600 focus:ring-blue-600 ring-offset-white focus:outline-none appearance-none dark:bg-neutral-700 dark:checked:bg-blue-600 dark:focus:ring-offset-neutral-800
+
+                                before:inline-block before:w-6 before:h-6 before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-neutral-400 dark:checked:before:bg-blue-200"
+                               value="1"
+                               {{ old('active', true) ? 'checked' : '' }}>
+                        <span class="ms-3 text-sm text-gray-600 dark:text-neutral-400">Usuario Activo</span>
+                    </label>
+                    @error('active')
+                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
             <!-- End Grid -->

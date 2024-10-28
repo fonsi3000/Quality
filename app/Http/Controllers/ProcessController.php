@@ -7,59 +7,65 @@ use Illuminate\Http\Request;
 
 class ProcessController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $processes = Process::orderBy('created_at', 'desc')->get();
+        return view('processes.index', compact('processes'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('processes.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:processes',
+        ]);
+
+        // Aseguramos que active sea true por defecto
+        $validated['active'] = $request->has('active');
+
+        Process::create($validated);
+
+        return redirect()
+            ->route('processes.index')
+            ->with('success', 'Proceso creado exitosamente.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Process $process)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Process $process)
     {
-        //
+        return view('processes.edit', compact('process'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Process $process)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:processes,name,' . $process->id,
+        ]);
+
+        // Aseguramos que active sea false si no viene en el request
+        $validated['active'] = $request->has('active');
+
+        $process->update($validated);
+
+        return redirect()
+            ->route('processes.index')
+            ->with('success', 'Proceso actualizado exitosamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Process $process)
     {
-        //
+        try {
+            $process->delete();
+            $message = ['success' => 'Proceso eliminado exitosamente.'];
+        } catch (\Exception $e) {
+            $message = ['error' => 'No se puede eliminar el proceso porque está en uso.'];
+        }
+
+        return redirect()
+            ->route('processes.index')
+            ->with($message);
     }
 }
