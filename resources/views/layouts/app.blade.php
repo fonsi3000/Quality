@@ -48,6 +48,73 @@
                             Tareas
                         </a>
 
+                        <!-- Documentos -->
+                        <a href="{{ route('documents') }}" 
+                        class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Documentos
+                        </a>
+
+                        <!-- Gestión de Documentos Dropdown -->
+                        <div class="hs-accordion" id="document-management-accordion">
+                            <button type="button" 
+                                    class="hs-accordion-toggle w-full flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                                Gestión de Doc.
+                                <svg class="hs-accordion-active:rotate-180 ms-auto w-4 h-4 transition-transform duration-300" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+
+                            <div id="document-management-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
+                                <a href="#" 
+                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-requests.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                    Solicitud de documentos
+                                </a>
+                                
+                                <a href="#" 
+                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-progress') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                    Documentos en elaboración
+                                </a>
+                                
+                                <a href="#" 
+                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-review') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                    Documentos en revisión
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Configuración de Documentos Dropdown -->
+                        <div class="hs-accordion" id="document-config-accordion">
+                            <button type="button" 
+                                    class="hs-accordion-toggle w-full flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Ajustes de Doc.
+                                <svg class="hs-accordion-active:rotate-180 ms-auto w-4 h-4 transition-transform duration-300" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+
+                            <div id="document-config-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
+                                <a href="{{ route('document-types.index') }}" 
+                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-types.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                    Tipos de documentos
+                                </a>
+                                
+                                <a href="{{ route('document-templates.index') }}" 
+                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-templates.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                    Plantillas de documento
+                                </a>
+                            </div>
+                        </div>
+
                         <!-- Organización Dropdown -->
                         <div class="hs-accordion" id="organization-accordion">
                             <button type="button" 
@@ -62,16 +129,14 @@
                             </button>
 
                             <div id="organization-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
-                                <!-- Unidades Submenu -->
                                 <a href="{{ route('units.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('units.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                        <path stroke-linecap="round" stroke-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                     </svg>
                                     Unidades
                                 </a>
                             
-                                <!-- Cargos Submenu -->
                                 <a href="{{ route('positions.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('positions.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -80,7 +145,6 @@
                                     Cargos
                                 </a>
                             
-                                <!-- Lista de procesos Submenu -->
                                 <a href="{{ route('processes.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('processes.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,7 +153,6 @@
                                     Lista de procesos
                                 </a>
                             
-                                <!-- Usuarios Submenu -->
                                 <a href="{{ route('users.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('users.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,24 +164,42 @@
                         </div>
                     </nav>
 
-                    <!-- Agregar el script para el acordeón -->
+                    <!-- Script para los acordeones -->
                     @push('scripts')
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             // Verificar si estamos en alguna ruta de organización
                             const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
                             
-                            if (isOrganizationRoute) {
-                                // Obtener el acordeón y expandirlo
-                                const accordion = document.getElementById('organization-accordion');
-                                const content = document.getElementById('organization-submenu');
+                            // Verificar si estamos en alguna ruta de gestión de documentos
+                            const isDocumentManagementRoute = {{ Request::routeIs('document-requests.*') || Request::routeIs('documents.in-progress') || Request::routeIs('documents.in-review') ? 'true' : 'false' }};
+                            
+                            // Verificar si estamos en alguna ruta de configuración de documentos
+                            const isDocumentConfigRoute = {{ Request::routeIs('document-types.*') || Request::routeIs('document-templates.*') ? 'true' : 'false' }};
+                            
+                            // Función para expandir acordeón
+                            const expandAccordion = (accordionId, submenuId) => {
+                                const accordion = document.getElementById(accordionId);
+                                const content = document.getElementById(submenuId);
                                 
                                 if (accordion && content) {
                                     accordion.classList.add('hs-accordion-active');
                                     content.classList.remove('hidden');
-                                    // Ajustar la altura del contenido
                                     content.style.height = content.scrollHeight + 'px';
                                 }
+                            };
+                            
+                            // Expandir acordeones según la ruta actual
+                            if (isOrganizationRoute) {
+                                expandAccordion('organization-accordion', 'organization-submenu');
+                            }
+                            
+                            if (isDocumentManagementRoute) {
+                                expandAccordion('document-management-accordion', 'document-management-submenu');
+                            }
+                            
+                            if (isDocumentConfigRoute) {
+                                expandAccordion('document-config-accordion', 'document-config-submenu');
                             }
                         });
                     </script>
@@ -141,14 +222,6 @@
 
                             <!-- Search Bar -->
                             <div class="hidden md:block flex-1 max-w-md ml-4">
-                                {{-- <div class="relative">
-                                    <input type="search" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-neutral-300" placeholder="Search...">
-                                    <div class="absolute left-3 top-2.5">
-                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </div>
-                                </div> --}}
                             </div>
 
                             <!-- Right Navigation Items -->
@@ -205,16 +278,18 @@
 
         <!-- Mobile Menu (Off-canvas) -->
         <div id="mobile-menu" class="hs-overlay hidden fixed top-0 left-0 z-[60] w-64 h-full transform -translate-x-full transition-all duration-300">
-            <!-- Mobile menu content -->
             <div class="h-full px-4 py-6 overflow-y-auto bg-white dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700">
+                <!-- Mobile Navigation Items (Same as sidebar but mobile-optimized) -->
                 <nav class="space-y-2">
-                    <!-- Mobile Navigation Items (Same as sidebar) -->
-                    <a href="#" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-700 rounded-lg bg-gray-100 dark:bg-neutral-700 dark:text-white dark:hover:bg-neutral-700">
+                    <!-- Tareas -->
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
-                        Dashboard
+                        Tareas
                     </a>
+                    
+                    <!-- Add other mobile menu items following the same pattern -->
                 </nav>
             </div>
         </div>
