@@ -49,6 +49,11 @@ class UserRequest extends FormRequest
                 'boolean',
                 'nullable'
             ],
+            'role' => [
+                'required',
+                'string',
+                Rule::exists('roles', 'name'),
+            ],
         ];
     }
 
@@ -68,6 +73,8 @@ class UserRequest extends FormRequest
             'process_id.exists' => 'El proceso seleccionado no es válido.',
             'position_id.exists' => 'El cargo seleccionado no es válido.',
             'active.boolean' => 'El estado debe ser activo o inactivo.',
+            'role.required' => 'El rol es obligatorio.',
+            'role.exists' => 'El rol seleccionado no es válido.',
         ];
     }
 
@@ -82,6 +89,7 @@ class UserRequest extends FormRequest
             'process_id' => 'proceso',
             'position_id' => 'cargo',
             'active' => 'estado',
+            'role' => 'rol',
         ];
     }
 
@@ -90,6 +98,13 @@ class UserRequest extends FormRequest
         if ($this->has('active')) {
             $this->merge([
                 'active' => filter_var($this->active, FILTER_VALIDATE_BOOLEAN)
+            ]);
+        }
+
+        // Asegurarse de que el rol esté en minúsculas para consistencia
+        if ($this->has('role')) {
+            $this->merge([
+                'role' => strtolower($this->role)
             ]);
         }
     }

@@ -10,6 +10,7 @@ class DashboardController extends Controller
     {
         $activeUsersCount = User::count(); // O si tienes un campo active: User::where('active', true)->count();
         
+        
         return view('dashboard', compact('activeUsersCount'));
     }
 }

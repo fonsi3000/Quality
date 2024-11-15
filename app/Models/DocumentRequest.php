@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Process;
 
 class DocumentRequest extends Model
 {
@@ -172,6 +174,8 @@ class DocumentRequest extends Model
     public function canBeEdited()
     {
         return !in_array($this->status, [
+            self::STATUS_EN_ELABORACION,
+            self::STATUS_REVISION,
             self::STATUS_PUBLICADO,
             self::STATUS_RECHAZADO
         ]);
@@ -220,4 +224,5 @@ class DocumentRequest extends Model
     {
         return $this->version;
     }
+   
 }

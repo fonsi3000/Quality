@@ -40,6 +40,7 @@
                     <!-- Navigation -->
                     <nav class="space-y-2">
                         <!-- Tareas -->
+                        @can('admin.agent')
                         <a href="{{ route('dashboard') }}" 
                         class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('dashboard') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,7 +48,8 @@
                             </svg>
                             Tareas
                         </a>
-
+                        @endcan
+                        @can('admin.agent')
                         <!-- Documentos -->
                         <a href="{{ route('documents.published') }}" 
                         class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
@@ -56,9 +58,29 @@
                             </svg>
                             Documentos
                         </a>
+                        @endcan
+                        @can('user')
+                        <a href="{{ route('documents.published') }}" 
+                         class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.published') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            Documentos Activos
+                        </a>
+
+                        <a href="{{ route('documents.requests.index') }}" 
+                         class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.requests.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H5.625c-.621 0-1.125-.504-1.125-1.125v-17.25c0-.621.504-1.125 1.125-1.125h12.75c.621 0 1.125.504 1.125 1.125v17.25c0 .621-.504 1.125-1.125 1.125z" />
+                            </svg>
+                            Gestion de documentos
+                        </a>
+                        @endcan
 
                         <!-- Gestión de Documentos Dropdown -->
+                        @can('admin.agent')
                         <div class="hs-accordion" id="document-management-accordion">
+                            
                             <button type="button" 
                                     class="hs-accordion-toggle w-full flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg">
                                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,23 +94,26 @@
 
                             <div id="document-management-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
                                 <a href="{{ route('documents.requests.index') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.requests.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.requests.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Solicitud de documentos
                                 </a>
                                 
+                                
                                 <a href="{{ route('documents.in-progress') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-progress') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-progress') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Documentos en elaboración
                                 </a>
                                 
                                 <a href="{{ route('documents.in-review') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-review') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-review') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Documentos en revisión
                                 </a>
+                                @endcan
                             </div>
                         </div>
 
                         <!-- Configuración de Documentos Dropdown -->
+                        @can('admin.agent')
                         <div class="hs-accordion" id="document-config-accordion">
                             <button type="button" 
                                     class="hs-accordion-toggle w-full flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg">
@@ -104,12 +129,12 @@
 
                             <div id="document-config-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
                                 <a href="{{ route('document-types.index') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-types.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-types.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Tipos de documentos
                                 </a>
                                 
                                 <a href="{{ route('document-templates.index') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-templates.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-templates.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Plantillas de documento
                                 </a>
                             </div>
@@ -130,15 +155,15 @@
 
                             <div id="organization-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
                                 <a href="{{ route('units.index') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('units.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('units.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                     </svg>
-                                    Unidades
+                                    Empresas
                                 </a>
                             
                                 <a href="{{ route('positions.index') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('positions.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('positions.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                     </svg>
@@ -146,7 +171,7 @@
                                 </a>
                             
                                 <a href="{{ route('processes.index') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('processes.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('processes.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                                     </svg>
@@ -154,7 +179,7 @@
                                 </a>
                             
                                 <a href="{{ route('users.index') }}" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('users.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('users.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                     </svg>
@@ -162,48 +187,49 @@
                                 </a>
                             </div>
                         </div>
-                    </nav>
+                    @endcan
+                </nav>
 
-                    <!-- Script para los acordeones -->
-                    @push('scripts')
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            // Verificar si estamos en alguna ruta de organización
-                            const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
+                <!-- Script para los acordeones -->
+                @push('scripts')
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Verificar si estamos en alguna ruta de organización
+                        const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
+                        
+                        // Verificar si estamos en alguna ruta de gestión de documentos
+                        const isDocumentManagementRoute = {{ Request::routeIs('documents.requests.*') || Request::routeIs('documents.in-progress') || Request::routeIs('documents.in-review') ? 'true' : 'false' }};
+                        
+                        // Verificar si estamos en alguna ruta de configuración de documentos
+                        const isDocumentConfigRoute = {{ Request::routeIs('document-types.*') || Request::routeIs('document-templates.*') ? 'true' : 'false' }};
+                        
+                        // Función para expandir acordeón
+                        const expandAccordion = (accordionId, submenuId) => {
+                            const accordion = document.getElementById(accordionId);
+                            const content = document.getElementById(submenuId);
                             
-                            // Verificar si estamos en alguna ruta de gestión de documentos
-                            const isDocumentManagementRoute = {{ Request::routeIs('documents.requests.*') || Request::routeIs('documents.in-progress') || Request::routeIs('documents.in-review') ? 'true' : 'false' }};
-                            
-                            // Verificar si estamos en alguna ruta de configuración de documentos
-                            const isDocumentConfigRoute = {{ Request::routeIs('document-types.*') || Request::routeIs('document-templates.*') ? 'true' : 'false' }};
-                            
-                            // Función para expandir acordeón
-                            const expandAccordion = (accordionId, submenuId) => {
-                                const accordion = document.getElementById(accordionId);
-                                const content = document.getElementById(submenuId);
-                                
-                                if (accordion && content) {
-                                    accordion.classList.add('hs-accordion-active');
-                                    content.classList.remove('hidden');
-                                    content.style.height = content.scrollHeight + 'px';
-                                }
-                            };
-                            
-                            // Expandir acordeones según la ruta actual
-                            if (isOrganizationRoute) {
-                                expandAccordion('organization-accordion', 'organization-submenu');
+                            if (accordion && content) {
+                                accordion.classList.add('hs-accordion-active');
+                                content.classList.remove('hidden');
+                                content.style.height = content.scrollHeight + 'px';
                             }
-                            
-                            if (isDocumentManagementRoute) {
-                                expandAccordion('document-management-accordion', 'document-management-submenu');
-                            }
-                            
-                            if (isDocumentConfigRoute) {
-                                expandAccordion('document-config-accordion', 'document-config-submenu');
-                            }
-                        });
-                    </script>
-                    @endpush
+                        };
+                        
+                        // Expandir acordeones según la ruta actual
+                        if (isOrganizationRoute) {
+                            expandAccordion('organization-accordion', 'organization-submenu');
+                        }
+                        
+                        if (isDocumentManagementRoute) {
+                            expandAccordion('document-management-accordion', 'document-management-submenu');
+                        }
+                        
+                        if (isDocumentConfigRoute) {
+                            expandAccordion('document-config-accordion', 'document-config-submenu');
+                        }
+                    });
+                </script>
+                @endpush
                 </div>
             </aside>
 
@@ -236,7 +262,13 @@
                                 <!-- Profile Dropdown -->
                                 <div class="hs-dropdown hs-dropdown-up relative inline-flex">
                                     <button type="button" class="inline-flex items-center gap-2" data-hs-dropdown-toggle>
-                                        <img class="w-10 h-10 rounded-full" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=300&h=300&q=80" alt="User">
+                                        @if(Auth::user()->profile_photo)
+                                            <img class="w-10 h-10 rounded-full object-cover" src="{{ asset('storage/' . Auth::user()->profile_photo) }}" alt="{{ Auth::user()->name }}">
+                                        @else
+                                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <span class="text-gray-600 text-lg font-medium">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                                            </div>
+                                        @endif
                                         <span class="hidden md:block text-sm font-medium text-gray-600 dark:text-neutral-300">
                                             {{ Auth::user()->name }}
                                         </span>
@@ -250,9 +282,9 @@
                                             </p>
                                         </div>
                                         <div class="mt-2 py-2 first:pt-0 last:pb-0">
-                                            <a class="flex items-center gap-x-3.5 py-2 px-3 text-sm text-gray-800 rounded-lg hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700" href="#">
+                                            {{-- <a class="flex items-center gap-x-3.5 py-2 px-3 text-sm text-gray-800 rounded-lg hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700" href="#">
                                                 Perfil
-                                            </a>
+                                            </a> --}}
                                             <!-- Formulario de Logout -->
                                             <form method="POST" action="{{ route('logout') }}" class="w-full">
                                                 @csrf

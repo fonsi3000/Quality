@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
@@ -7,10 +6,30 @@ use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Ordenamos las unidades por fecha de creación descendente
-        $units = Unit::orderBy('created_at', 'desc')->get();
+        $query = Unit::query();
+
+        // Aplicar filtros de búsqueda
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where('name', 'LIKE', "%{$search}%");
+        }
+
+        // Aplicar filtro de estado si existe
+        if ($request->filled('status')) {
+            $query->where('active', $request->status === 'active');
+        }
+
+        // Ordenamiento
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        // Paginación
+        $units = $query->paginate(10);
+        $units->appends($request->except('page'));
+
         return view('units.index', compact('units'));
     }
 
@@ -25,9 +44,7 @@ class UnitController extends Controller
             'name' => 'required|string|max:255|unique:units'
         ]);
 
-        // Establecemos active como true por defecto para nuevas unidades
         $validated['active'] = true;
-
         Unit::create($validated);
 
         return redirect()
@@ -47,9 +64,7 @@ class UnitController extends Controller
             'active' => 'boolean'
         ]);
 
-        // Aseguramos que active sea false si no viene en el request
         $validated['active'] = $request->has('active');
-
         $unit->update($validated);
 
         return redirect()

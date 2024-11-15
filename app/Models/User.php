@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+use App\Models\Process;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
         'name',
@@ -74,5 +76,16 @@ class User extends Authenticatable
         return $query->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('department', 'like', "%{$search}%");
+    }
+    public function getFriendlyRoleName()
+    {
+        $roleNames = [
+            'admin' => 'Líder de Calidad',
+            'agent' => 'Profesional de Calidad',
+            'user' => 'Colaborador'
+        ];
+
+        $role = $this->roles->first();
+        return $role ? ($roleNames[$role->name] ?? $role->name) : 'Sin rol';
     }
 }

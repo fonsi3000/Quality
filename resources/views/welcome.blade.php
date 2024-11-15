@@ -216,7 +216,7 @@
                 </div> --}}
                 <h2 class="font-bold text-gray-800 text-3xl sm:text-4xl md:text-5xl lg:text-6xl dark:text-neutral-200 mb-4">
                     Gestor de Documentos
-                    <span class="block sm:inline bg-clip-text bg-gradient-to-tl from-blue-600 to-violet-600 text-transparent animate-pulse">Quality</span>
+                    <span class="block sm:inline bg-clip-text bg-gradient-to-tl from-blue-600 to-violet-600 text-transparent animate-pulse">Qualy</span>
                 </h2>
             </div>
             <div class="absolute top-0 start-1/2 -z-10 size-full bg-[url('https://preline.co/assets/svg/examples/polygon-bg-element.svg')] dark:bg-[url('https://preline.co/assets/svg/examples-dark/polygon-bg-element.svg')] bg-no-repeat bg-top bg-cover transform -translate-x-1/2"></div>

@@ -7,9 +7,31 @@ use Illuminate\Http\Request;
 
 class PositionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $positions = Position::orderBy('created_at', 'desc')->get();
+        $query = Position::query();
+
+        // Búsqueda por nombre
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('name', 'LIKE', "%{$request->search}%");
+        }
+
+        // Ordenamiento
+        $sortColumn = $request->get('sort', 'created_at');
+        $direction = $request->get('direction', 'desc');
+
+        // Lista de columnas permitidas para ordenar
+        $allowedColumns = ['name', 'created_at'];
+
+        if (in_array($sortColumn, $allowedColumns)) {
+            $query->orderBy($sortColumn, $direction);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Paginación
+        $positions = $query->paginate(10)->appends($request->query());
+
         return view('positions.index', compact('positions'));
     }
 

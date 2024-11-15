@@ -7,17 +7,68 @@ use App\Models\Unit;
 use App\Models\Process;
 use App\Models\Position;
 use App\Http\Requests\UserRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function index()
+    protected $roleNames = [
+        'admin' => 'Líder de Calidad',
+        'agent' => 'Profesional de Calidad',
+        'user' => 'Colaborador'
+    ];
+
+    public function index(Request $request)
     {
-        $users = User::with(['unit', 'process', 'position'])
-                    ->latest()
-                    ->paginate(10);
-        return view('users.index', compact('users'));
+        $query = User::with(['unit', 'process', 'position', 'roles']);
+
+        // Aplicar filtros
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('active', $request->status === 'active');
+        }
+
+        if ($request->filled('role')) {
+            $query->whereHas('roles', function($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+
+        if ($request->filled('unit')) {
+            $query->where('unit_id', $request->unit);
+        }
+
+        if ($request->filled('process')) {
+            $query->where('process_id', $request->process);
+        }
+
+        // Ordenamiento
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        // Paginación manteniendo los parámetros de consulta
+        $users = $query->paginate(10);
+        $users->appends($request->except('page'));
+        
+        // Obtener datos para los filtros
+        $units = Unit::where('active', true)->orderBy('name')->get();
+        $processes = Process::where('active', true)->orderBy('name')->get();
+        $roles = collect($this->roleNames)->map(function($name, $key) {
+            return (object)['name' => $key, 'display_name' => $name];
+        });
+
+        return view('users.index', compact('users', 'units', 'processes', 'roles'));
     }
 
     public function create()
@@ -31,8 +82,10 @@ class UserController extends Controller
         $positions = Position::where('active', true)
                           ->orderBy('name')
                           ->get();
+        $roles = Role::orderBy('name')->get();
+        $roleNames = $this->roleNames;
 
-        return view('users.create', compact('units', 'processes', 'positions'));
+        return view('users.create', compact('units', 'processes', 'positions', 'roles', 'roleNames'));
     }
 
     public function store(UserRequest $request)
@@ -46,10 +99,13 @@ class UserController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
         
-        // No necesitas asignar explícitamente estos campos si ya están en el $validated
-        // ya que deberían venir validados desde UserRequest
+        // Crear usuario
+        $user = User::create($validated);
 
-        User::create($validated);
+        // Asignar rol
+        if ($request->has('role')) {
+            $user->assignRole($request->role);
+        }
 
         return redirect()
             ->route('users.index')
@@ -67,8 +123,11 @@ class UserController extends Controller
         $positions = Position::where('active', true)
                           ->orderBy('name')
                           ->get();
+        $roles = Role::orderBy('name')->get();
+        $userRole = $user->roles->first();
+        $roleNames = $this->roleNames;
 
-        return view('users.edit', compact('user', 'units', 'processes', 'positions'));
+        return view('users.edit', compact('user', 'units', 'processes', 'positions', 'roles', 'userRole', 'roleNames'));
     }
 
     public function update(UserRequest $request, User $user)
@@ -89,7 +148,13 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
+        // Actualizar usuario
         $user->update($validated);
+
+        // Actualizar rol
+        if ($request->has('role')) {
+            $user->syncRoles([$request->role]);
+        }
 
         return redirect()
             ->route('users.index')
@@ -98,18 +163,18 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        // if (auth()->id() === $user->id) {
-        //     return back()->with('error', 'No puedes eliminar tu propio usuario.');
-        // }
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'No puedes eliminar tu propio usuario.');
+        }
 
         try {
             if ($user->profile_photo) {
                 Storage::disk('public')->delete($user->profile_photo);
             }
-
             $user->delete();
             $message = ['success' => 'Usuario eliminado exitosamente.'];
         } catch (\Exception $e) {
+            Log::error('Error al eliminar usuario: ' . $e->getMessage());
             $message = ['error' => 'No se pudo eliminar el usuario.'];
         }
 
@@ -125,11 +190,16 @@ class UserController extends Controller
             $status = $user->active ? 'activado' : 'desactivado';
             $message = ['success' => "Usuario {$status} exitosamente."];
         } catch (\Exception $e) {
+            Log::error('Error al cambiar estado del usuario: ' . $e->getMessage());
             $message = ['error' => 'No se pudo cambiar el estado del usuario.'];
         }
 
         return redirect()
             ->route('users.index')
             ->with($message);
+    }
+    public function getRoleFriendlyName($roleName)
+    {
+        return $this->roleNames[$roleName] ?? $roleName;
     }
 }

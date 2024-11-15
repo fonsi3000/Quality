@@ -140,9 +140,9 @@
                                             <span class="text-sm font-medium text-gray-800 dark:text-neutral-200">
                                                 {{ $request->document_name }}
                                             </span>
-                                            <span class="text-xs text-gray-500 dark:text-neutral-400">
+                                            {{-- <span class="text-xs text-gray-500 dark:text-neutral-400">
                                                 {{ $request->documentType->name }}
-                                            </span>
+                                            </span> --}}
                                         </div>
                                     </td>
                                     <td class="px-4 py-4">
@@ -169,11 +169,14 @@
                                         <div class="flex items-center justify-end gap-2">
                                             <button type="button" 
                                                     data-hs-overlay="#request-modal-{{ $request->id }}"
-                                                    class="inline-flex items-center gap-x-2 text-sm text-blue-600 decoration-2 hover:underline font-medium dark:text-blue-500 dark:hover:text-blue-400">
-                                                Ver
+                                                    class="text-blue-600 hover:text-blue-400 dark:text-blue-500 dark:hover:text-blue-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                                    <circle cx="12" cy="12" r="3"/>
+                                                </svg>
                                             </button>
                                         </div>
-                                    </td>
+                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -269,7 +272,7 @@
                                 <!-- Descripción -->
                                 <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
                                     <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                                        Descripción
+                                        Descripción del documento
                                     </h4>
                                     <p class="text-sm text-gray-800 dark:text-gray-200">
                                         {{ $request->description ?: 'Sin descripción disponible' }}
@@ -279,7 +282,7 @@
                                 <!-- Observaciones -->
                                 <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
                                     <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                                        Observaciones
+                                        Observacion de calidad
                                     </h4>
                                     <p class="text-sm text-gray-800 dark:text-gray-200">
                                         {{ $request->observations ?: 'Sin observaciones' }}
@@ -292,13 +295,13 @@
                                 <!-- Historial de versiones -->
                                 <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
                                     <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                                        Historial de Documentos
+                                        Documento
                                     </h4>
-                                    
+                                    @can('admin.agent')
                                     <!-- Documento Original -->
                                     <div class="mb-4">
                                         <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Documento Original
+                                            Documento Borrador
                                         </h5>
                                         <div class="flex items-center gap-3">
                                             <a href="{{ route('documents.requests.preview-document', $request->id) }}"
@@ -321,7 +324,7 @@
                                             </a>
                                         </div>
                                     </div>
-
+                                    @endcan
                                     <!-- Documento Final -->
                                     @if($request->final_document_path)
                                     <div>
@@ -336,7 +339,7 @@
                                                     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                                                     <circle cx="12" cy="12" r="3"/>
                                                 </svg>
-                                                Ver documento final
+                                                Ver documento
                                             </a>
                                             <a href="{{ route('documents.requests.download-final', $request->id) }}"
                                                class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
@@ -345,7 +348,7 @@
                                                     <polyline points="7 10 12 15 17 10"/>
                                                     <line x1="12" x2="12" y1="15" y2="3"/>
                                                 </svg>
-                                                Descargar final
+                                                Documento
                                             </a>
                                         </div>
                                     </div>

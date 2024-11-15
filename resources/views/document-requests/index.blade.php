@@ -245,7 +245,7 @@
                                                             </svg>
                                                         </a>
                                                         @endif
-
+                                                        @can('admin.agent')
                                                         <form action="{{ route('documents.requests.destroy', $request->id) }}" 
                                                               method="POST" 
                                                               class="inline"
@@ -261,6 +261,7 @@
                                                                 </svg>
                                                             </button>
                                                         </form>
+                                                        @endcan
                                                     </div>
                                                 </td>
                                             </tr>
@@ -449,9 +450,9 @@
                         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
-                    Ver Documento
+                    Ver Documento Borrador
                 </a>
-
+                @can('admin.agent')
                 <button type="button"
                         data-hs-overlay="#assign-modal-{{ $request->id }}"
                         class="w-full sm:w-auto py-2.5 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border-2 border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 hover:border-emerald-700 transition-colors duration-200">
@@ -472,6 +473,7 @@
                     </svg>
                     Rechazar
                 </button>
+                @endcan
 
                 <button type="button"
                         data-hs-overlay="#request-modal-{{ $request->id }}"

@@ -20,9 +20,9 @@
 
                     <!-- Formulario -->
                     <form action="{{ route('documents.requests.update', $documentRequest->id) }}" 
-                          method="POST" 
-                          enctype="multipart/form-data" 
-                          class="space-y-6">
+                        method="POST" 
+                        enctype="multipart/form-data" 
+                        class="space-y-6">
                         @csrf
                         @method('PUT')
 

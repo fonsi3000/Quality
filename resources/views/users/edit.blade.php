@@ -140,6 +140,28 @@
                 </div>
 
                 <div class="sm:col-span-3">
+                    <label for="role" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
+                        Rol del usuario
+                    </label>
+                </div>
+
+                <div class="sm:col-span-9">
+                    <select id="role" name="role" 
+                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600 @error('role') border-red-500 @enderror">
+                        <option value="">Seleccione un rol</option>
+                        <option value="admin" {{ old('role', $userRole?->name) == 'admin' ? 'selected' : '' }}>Líder de Calidad</option>
+                        <option value="agent" {{ old('role', $userRole?->name) == 'agent' ? 'selected' : '' }}>Profesional de Calidad</option>
+                        <option value="user" {{ old('role', $userRole?->name) == 'user' ? 'selected' : '' }}>Colaborador</option>
+                    </select>
+                    @error('role')
+                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
+                    <p class="text-sm text-gray-500 mt-2 dark:text-neutral-400">
+                        El rol determina los permisos y accesos del usuario en el sistema
+                    </p>
+                </div>
+
+                <div class="sm:col-span-3">
                     <label for="password" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
                         Contraseña
                     </label>

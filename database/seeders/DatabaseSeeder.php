@@ -2,25 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Primero llamamos al UserSeeder
+        // Es importante mantener este orden
         $this->call([
-            UserSeeder::class,
+            RolesAndPermissionsSeeder::class, // Primero crear roles
+            UserSeeder::class,                // Luego crear usuarios
         ]);
-
-        // Luego creamos el usuario de prueba específico
-        
-
-        // Opcionalmente, puedes crear más usuarios de prueba
-        // User::factory(10)->create();
     }
 }
