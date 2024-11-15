@@ -49,7 +49,7 @@
                         </a>
 
                         <!-- Documentos -->
-                        <a href="{{ route('documents') }}" 
+                        <a href="{{ route('documents.published') }}" 
                         class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -71,17 +71,17 @@
                             </button>
 
                             <div id="document-management-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
-                                <a href="#" 
-                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-requests.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                                <a href="{{ route('documents.requests.index') }}" 
+                                   class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.requests.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Solicitud de documentos
                                 </a>
                                 
-                                <a href="#" 
+                                <a href="{{ route('documents.in-progress') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-progress') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Documentos en elaboración
                                 </a>
                                 
-                                <a href="#" 
+                                <a href="{{ route('documents.in-review') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-review') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Documentos en revisión
                                 </a>
@@ -132,7 +132,7 @@
                                 <a href="{{ route('units.index') }}" 
                                    class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('units.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                     </svg>
                                     Unidades
                                 </a>
@@ -172,7 +172,7 @@
                             const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
                             
                             // Verificar si estamos en alguna ruta de gestión de documentos
-                            const isDocumentManagementRoute = {{ Request::routeIs('document-requests.*') || Request::routeIs('documents.in-progress') || Request::routeIs('documents.in-review') ? 'true' : 'false' }};
+                            const isDocumentManagementRoute = {{ Request::routeIs('documents.requests.*') || Request::routeIs('documents.in-progress') || Request::routeIs('documents.in-review') ? 'true' : 'false' }};
                             
                             // Verificar si estamos en alguna ruta de configuración de documentos
                             const isDocumentConfigRoute = {{ Request::routeIs('document-types.*') || Request::routeIs('document-templates.*') ? 'true' : 'false' }};
@@ -234,7 +234,7 @@
                                 </button>
 
                                 <!-- Profile Dropdown -->
-                                <div class="hs-dropdown relative inline-flex">
+                                <div class="hs-dropdown hs-dropdown-up relative inline-flex">
                                     <button type="button" class="inline-flex items-center gap-2" data-hs-dropdown-toggle>
                                         <img class="w-10 h-10 rounded-full" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=300&h=300&q=80" alt="User">
                                         <span class="hidden md:block text-sm font-medium text-gray-600 dark:text-neutral-300">
@@ -242,7 +242,7 @@
                                         </span>
                                     </button>
 
-                                    <div class="hs-dropdown-menu hidden transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 min-w-48 bg-white shadow-md rounded-lg p-2 mt-2 dark:bg-neutral-800 dark:border dark:border-neutral-700" aria-labelledby="hs-dropdown-with-header">
+                                    <div class="hs-dropdown-menu hidden transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 min-w-48 bg-white shadow-md rounded-lg p-2 mb-2 bottom-full dark:bg-neutral-800 dark:border dark:border-neutral-700 z-[9999] absolute left-0" aria-labelledby="hs-dropdown-with-header">
                                         <div class="py-3 px-5 -m-2 bg-gray-100 rounded-t-lg dark:bg-neutral-700">
                                             <p class="text-sm text-gray-500 dark:text-neutral-400">Conectado como</p>
                                             <p class="text-sm font-medium text-gray-800 dark:text-neutral-300">
@@ -256,8 +256,7 @@
                                             <!-- Formulario de Logout -->
                                             <form method="POST" action="{{ route('logout') }}" class="w-full">
                                                 @csrf
-                                                <button type="submit" 
-                                                        class="w-full text-left flex items-center gap-x-3.5 py-2 px-3 text-sm text-red-600 rounded-lg hover:bg-gray-100 dark:text-red-500 dark:hover:bg-neutral-700">
+                                                <button type="submit" class="w-full text-left flex items-center gap-x-3.5 py-2 px-3 text-sm text-red-600 rounded-lg hover:bg-gray-100 dark:text-red-500 dark:hover:bg-neutral-700">
                                                     Cerrar sesión
                                                 </button>
                                             </form>

@@ -19,7 +19,8 @@ class User extends Authenticatable
         'unit_id',
         'process_id',
         'position_id',
-        'active' // Campo agregado
+        'active',
+        'department'
     ];
 
     protected $hidden = [
@@ -30,9 +31,12 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'active' => 'boolean' // Cast agregado
+        'active' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
+    // Relaciones organizacionales
     public function unit()
     {
         return $this->belongsTo(Unit::class);
@@ -48,9 +52,27 @@ class User extends Authenticatable
         return $this->belongsTo(Position::class);
     }
 
-    // Método de alcance para filtrar usuarios activos
+    // Relaciones con documentos
+    public function documentRequests()
+    {
+        return $this->hasMany(DocumentRequest::class);
+    }
+
+    public function responsibleFor()
+    {
+        return $this->hasMany(DocumentRequest::class, 'responsible_id');
+    }
+
+    // Scopes
     public function scopeActive($query)
     {
         return $query->where('active', true);
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('department', 'like', "%{$search}%");
     }
 }
