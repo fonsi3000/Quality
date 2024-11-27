@@ -77,11 +77,10 @@
                         </a>
                         @endcan
 
-                        <!-- Gestión de Documentos Dropdown -->
-                        @can('admin.agent')
+                        {{-- Menú completo para Admin --}}
+                        @can('admin.only')
                         <div class="hs-accordion" id="document-management-accordion">
-                            
-                            <button type="button" 
+                            <button type="button"
                                     class="hs-accordion-toggle w-full flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg">
                                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -93,24 +92,34 @@
                             </button>
 
                             <div id="document-management-submenu" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300 ps-3">
-                                <a href="{{ route('documents.requests.index') }}" 
+                                <a href="{{ route('documents.requests.index') }}"
                                 class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.requests.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Solicitud de documentos
                                 </a>
-                                
-                                
-                                <a href="{{ route('documents.in-progress') }}" 
+
+                                <a href="{{ route('documents.in-progress') }}"
                                 class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-progress') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Documentos en elaboración
                                 </a>
-                                
-                                <a href="{{ route('documents.in-review') }}" 
+
+                                <a href="{{ route('documents.in-review') }}"
                                 class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-review') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Documentos en revisión
                                 </a>
-                                @endcan
                             </div>
                         </div>
+                        @endcan
+
+                        {{-- Solo "Documentos en elaboración" para Agente --}}
+                        @can('view.agent')
+                        <a href="{{ route('documents.in-progress') }}"
+                        class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('documents.in-progress') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            Documentos en elaboración
+                        </a>
+                        @endcan
 
                         <!-- Configuración de Documentos Dropdown -->
                         @can('admin.agent')

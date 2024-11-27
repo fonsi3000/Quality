@@ -147,7 +147,7 @@ class DocumentRequestController extends Controller
             'document_type_id' => 'required|exists:document_types,id',
             'document_name' => 'required|string|max:255',
             'description' => 'required|string',
-            'document' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx',
+            'document' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
         ]);
 
         try {
@@ -271,7 +271,8 @@ class DocumentRequestController extends Controller
         }
     }
 
-    public function edit(DocumentRequest $documentRequest) {
+    public function edit(DocumentRequest $documentRequest) 
+    {
         try {
             $documentTypes = DocumentType::where('is_active', true)->get();
             $users = User::where('active', true)->get(); 
@@ -285,13 +286,14 @@ class DocumentRequestController extends Controller
         }
     }
      
-     public function update(Request $request, DocumentRequest $documentRequest) {
+     public function update(Request $request, DocumentRequest $documentRequest) 
+     {
         $validated = $request->validate([
             'request_type' => 'required|in:create,modify',
             'document_type_id' => 'required|exists:document_types,id',
             'document_name' => 'required|string|max:255', 
             'description' => 'required|string',
-            'document' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx'
+            'document' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx'
         ]);
      
         try {
@@ -556,7 +558,7 @@ class DocumentRequestController extends Controller
     public function attachFinalDocument(Request $request, DocumentRequest $documentRequest)
     {
         $validated = $request->validate([
-            'final_document' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx',
+            'final_document' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
             'observations' => 'nullable|string',
         ]);
 
@@ -1000,4 +1002,5 @@ class DocumentRequestController extends Controller
            return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
        }
    }
+   
 }

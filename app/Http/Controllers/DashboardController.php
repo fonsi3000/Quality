@@ -3,14 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\DocumentRequest;
 
-class DashboardController extends Controller
+class DashboardController extends Controller 
 {
     public function index()
     {
-        $activeUsersCount = User::count(); // O si tienes un campo active: User::where('active', true)->count();
+        $activeUsersCount = User::count();
         
+        $activeTasks = DocumentRequest::whereNotIn('status', [
+            DocumentRequest::STATUS_PUBLICADO,
+            DocumentRequest::STATUS_RECHAZADO
+        ])->count();
         
-        return view('dashboard', compact('activeUsersCount'));
+        $publishedDocuments = DocumentRequest::where('status', 
+            DocumentRequest::STATUS_PUBLICADO
+        )->count();
+
+        return view('dashboard', compact(
+            'activeUsersCount',
+            'activeTasks',
+            'publishedDocuments'
+        ));
     }
 }

@@ -45,9 +45,9 @@
                         <div class="flex items-center gap-x-1 md:gap-x-2 ms-auto py-1 md:ps-6 md:order-3 md:col-span-3">
                             <!-- Sign In Button -->
                             <button type="button" 
-                                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-xl border border-transparent bg-lime-400 text-black hover:bg-lime-500 focus:outline-none focus:bg-lime-500 transition disabled:opacity-50 disabled:pointer-events-none" 
-                                    data-hs-overlay="#hs-modal-signin">
-                                Sign in
+                            class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-xl border border-transparent bg-[#FE6C2D] text-white hover:bg-[#d55a2f] focus:outline-none focus:bg-[#d55a2f] transition disabled:opacity-50 disabled:pointer-events-none"
+                            data-hs-overlay="#hs-modal-signin">
+                            Iniciar sesión
                             </button>
                             
                             <!-- Mobile Menu Toggle -->
@@ -141,7 +141,8 @@
                                 <div class="p-4 sm:p-7">
                                     <!-- Modal Header -->
                                     <div class="text-center">
-                                        <h3 class="block text-2xl font-bold text-gray-800 dark:text-neutral-200">Sign in</h3>
+                                        <h3 class="block text-2xl font-bold text-gray-800 dark:text-neutral-200">Bienvenido a Qualy</h3>
+                                        <p>Inicia sesion para gentionar tus Documentos</p>
                                     </div>
 
                                     <!-- Sign In Form -->
@@ -163,7 +164,7 @@
                                         <!-- Email Field -->
                                         <div class="mb-4">
                                             <label for="email" class="block text-sm font-medium mb-2 dark:text-white">
-                                                Email address
+                                                Dirección de correo electrónico
                                             </label>
                                             <input type="email" 
                                                    id="email" 
@@ -177,7 +178,7 @@
                                         <!-- Password Field -->
                                         <div class="mb-4">
                                             <label for="password" class="block text-sm font-medium mb-2 dark:text-white">
-                                                Password
+                                                Contraseña
                                             </label>
                                             <input type="password" 
                                                    id="password" 
@@ -193,14 +194,14 @@
                                                    name="remember" 
                                                    class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-800 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800">
                                             <label for="remember" class="text-sm text-gray-500 ms-3 dark:text-gray-400">
-                                                Remember me
+                                                Recordar Contraseña
                                             </label>
                                         </div>
 
                                         <!-- Submit Button -->
                                         <button type="submit" 
-                                                class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:pointer-events-none dark:focus:ring-offset-gray-800">
-                                            Sign in
+                                            class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-[#FE6C2D] text-white hover:bg-[#e55d1e] focus:outline-none focus:ring-2 focus:ring-[#FE6C2D] focus:ring-offset-2 transition disabled:opacity-50 disabled:pointer-events-none dark:focus:ring-offset-gray-800">
+                                            Ingresar
                                         </button>
                                     </form>
                                 </div>
@@ -209,15 +210,17 @@
                     </div>
                 </header>
         </div>
-        <main class="relative overflow-hidden py-10 sm:py-16 lg:py-24">
-            <div class="relative z-10 text-center">
-                {{-- <div class="banner-container">
-                    <img src="{{ asset('images/logo.png') }}" alt="Banner" class="banner-image rounded-lg mb-8">
-                </div> --}}
-                <h2 class="font-bold text-gray-800 text-3xl sm:text-4xl md:text-5xl lg:text-6xl dark:text-neutral-200 mb-4">
+        <main class="relative overflow-hidden py-10 sm:py-16 lg:py-0">
+            <div class="relative z-10 text-center max-w-7xl mx-auto px-4">
+                <div class="mb-8">
+                    <img src="{{ asset('images/bg-qualy.png') }}" 
+                         alt="Banner" 
+                         class="w-full max-w-3xl h-auto mx-auto rounded-xl shadow-lg">
+                </div>
+                {{-- <h2 class="font-bold text-gray-800 text-3xl sm:text-4xl md:text-5xl lg:text-6xl dark:text-neutral-200 mb-4">
                     Gestor de Documentos
                     <span class="block sm:inline bg-clip-text bg-gradient-to-tl from-blue-600 to-violet-600 text-transparent animate-pulse">Qualy</span>
-                </h2>
+                </h2> --}}
             </div>
             <div class="absolute top-0 start-1/2 -z-10 size-full bg-[url('https://preline.co/assets/svg/examples/polygon-bg-element.svg')] dark:bg-[url('https://preline.co/assets/svg/examples-dark/polygon-bg-element.svg')] bg-no-repeat bg-top bg-cover transform -translate-x-1/2"></div>
         </main>
