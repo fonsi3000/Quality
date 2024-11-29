@@ -49,10 +49,18 @@ WORKDIR /app
 
 COPY . .
 
-RUN composer install
-RUN composer require laravel/octane --with-all-dependencies
+RUN composer install && \
+    composer require laravel/octane --with-all-dependencies
 
-RUN npm install
+RUN npm install && \
+    npm install preline --save && \
+    npm install @vitejs/plugin-vue laravel-vite-plugin
+
+RUN mkdir -p resources/css resources/js && \
+    mkdir -p public/build
+
+RUN echo "import './bootstrap';\nimport 'preline';" > resources/js/app.js && \
+    touch resources/css/app.css
 
 RUN echo "APP_NAME=Quality\n\
 APP_ENV=local\n\
@@ -148,11 +156,12 @@ if ! mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
     exit 1\n\
 fi\n\
 \n\
+echo "Limpiando y reconstruyendo assets..."\n\
+rm -rf public/build\n\
+npm run build\n\
+\n\
 echo "Instalando dependencias de Octane..."\n\
 php artisan octane:install --server=swoole\n\
-\n\
-echo "Construyendo assets con Vite..."\n\
-npm run build\n\
 \n\
 echo "Ejecutando migraciones y seeders..."\n\
 php artisan migrate:fresh --seed --force\n\
