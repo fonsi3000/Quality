@@ -11,9 +11,11 @@ RUN apt-get update && apt-get upgrade -y && \
     libfreetype6-dev libjpeg-turbo8-dev libpng-dev libzip-dev \
     curl unzip nano software-properties-common
 
-# Instala Node.js y npm
+# Instala Node.js y npm actualizado
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y nodejs && \
+    npm install -g npm@latest && \
+    npm install -g vite
 
 # Instala y configura MySQL correctamente
 RUN apt-get install -y mysql-server && \
@@ -53,7 +55,14 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos de la aplicación al contenedor
+# Copia package.json y package-lock.json primero para aprovechar la caché de capas de Docker
+COPY package*.json ./
+
+# Instala las dependencias de Node.js
+ENV NODE_ENV=production
+RUN npm install
+
+# Copia el resto de los archivos de la aplicación
 COPY . .
 
 # Configura el archivo .env
@@ -121,16 +130,14 @@ RUN composer require laravel/octane --no-interaction
 # Instala Octane con Swoole
 RUN php artisan octane:install --server=swoole
 
-# Configura los permisos iniciales
-RUN chown -R www-data:www-data /app && \
-    chmod -R 775 storage bootstrap/cache
-
-# Instala dependencias de Node.js y construye assets para producción
-ENV NODE_ENV=production
-RUN npm install && \
-    npm run build && \
+# Construye los assets
+RUN npm run build && \
     rm -rf node_modules && \
     npm cache clean --force
+
+# Configura los permisos
+RUN chown -R www-data:www-data /app && \
+    chmod -R 775 storage bootstrap/cache
 
 # Optimiza Laravel para producción
 RUN php artisan config:cache && \
@@ -169,7 +176,7 @@ done\n\
 \n\
 # Ejecuta las migraciones\n\
 echo "Running migrations..."\n\
-php artisan migrate --force\n\
+php artisan migrate --seed --force\n\
 \n\
 # Limpia y optimiza la aplicación\n\
 php artisan optimize:clear\n\
