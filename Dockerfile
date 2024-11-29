@@ -36,7 +36,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Configura MySQL
 RUN service mysql start && \
     mysql -e "CREATE DATABASE quality_db;" && \
-    mysql -e "CREATE USER 'root'@'%' IDENTIFIED BY '1524';" && \
+    mysql -e "CREATE USER 'root'@'%' IDENTIFIED BY 'E5pum452025*.';" && \
     mysql -e "GRANT ALL PRIVILEGES ON quality_db.* TO 'root'@'%';" && \
     mysql -e "FLUSH PRIVILEGES;"
 
