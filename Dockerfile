@@ -33,11 +33,13 @@ RUN pecl install swoole && \
 # Instala Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Configura MySQL
+# Configura MySQL con permisos adecuados
 RUN service mysql start && \
     mysql -e "CREATE DATABASE quality_db;" && \
-    mysql -e "CREATE USER 'root'@'%' IDENTIFIED BY 'E5pum452025*.';" && \
-    mysql -e "GRANT ALL PRIVILEGES ON quality_db.* TO 'root'@'%';" && \
+    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
+    mysql -e "CREATE USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
+    mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;" && \
+    mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" && \
     mysql -e "FLUSH PRIVILEGES;"
 
 # Establece el directorio de trabajo
@@ -68,7 +70,7 @@ DB_HOST=127.0.0.1\n\
 DB_PORT=3306\n\
 DB_DATABASE=quality_db\n\
 DB_USERNAME=root\n\
-DB_PASSWORD=1524\n\
+DB_PASSWORD=E5pum452025*.\n\
 SESSION_DRIVER=database\n\
 SESSION_LIFETIME=120\n\
 SESSION_ENCRYPT=false\n\
@@ -100,7 +102,7 @@ AWS_USE_PATH_STYLE_ENDPOINT=false\n\
 VITE_APP_NAME=\"\${APP_NAME}\"\n\
 OCTANE_SERVER=swoole" > .env
 
-# Instala dependencias de PHP y Node.js
+# Instala dependencias de PHP
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
 # Instala Laravel Octane
@@ -114,10 +116,22 @@ RUN npm install && \
     npm run build
 
 # Configura los permisos
-RUN chmod -R 775 storage bootstrap/cache
+RUN chown -R www-data:www-data /app && \
+    chmod -R 775 storage bootstrap/cache
 
 # Genera la clave de la aplicación si no existe
 RUN php artisan key:generate --force
+
+# Ejecuta las migraciones
+RUN service mysql start && \
+    while ! mysqladmin ping -h"localhost" --silent; do sleep 1; done && \
+    php artisan migrate:fresh --force && \
+    php artisan db:seed --force
+
+# Optimizaciones para producción
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 
 # Crea un script de inicio
 RUN echo '#!/bin/bash\n\
@@ -127,7 +141,7 @@ while ! mysqladmin ping -h"localhost" --silent; do\n\
 done\n\
 php artisan migrate --force\n\
 npm run dev & \n\
-php artisan octane:start --server=swoole --host=0.0.0.0 --port=80\n\
+php artisan octane:start --server=swoole --host=0.0.0.0 --port=80 --workers=4 --task-workers=2\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 # Comando para iniciar todos los servicios
