@@ -166,6 +166,7 @@ RUN php artisan key:generate --force && \
 
 # Build de assets y limpieza
 RUN npm install && \
+    npm install -D vite && \
     npm run build && \
     rm -rf node_modules && \
     npm cache clean --force
