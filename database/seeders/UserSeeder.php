@@ -9,12 +9,9 @@ use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Crear usuario Admin
+        // Admin User
         $adminUser = User::create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
@@ -23,7 +20,7 @@ class UserSeeder extends Seeder
         ]);
         $adminUser->assignRole('admin');
 
-        // Crear usuario Agente
+        // Agent User
         $agentUser = User::create([
             'name' => 'Agent User',
             'email' => 'agent@example.com',
@@ -32,7 +29,7 @@ class UserSeeder extends Seeder
         ]);
         $agentUser->assignRole('agent');
 
-        // Crear usuario normal
+        // Normal User
         $normalUser = User::create([
             'name' => 'Normal User',
             'email' => 'user@example.com',
@@ -41,9 +38,22 @@ class UserSeeder extends Seeder
         ]);
         $normalUser->assignRole('user');
 
-        // Opcional: crear usuarios adicionales con rol 'user'
-        // User::factory(10)->create()->each(function ($user) {
-        //     $user->assignRole('user');
-        // });
+        // Brenda - Líder Calidad Medellín
+        $brendaUser = User::create([
+            'name' => 'Brenda Anaya Mora',
+            'email' => 'lider.calidad@espumasmedellin.com.co',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+        $brendaUser->assignRole('admin');
+
+        // Leydis - Líder Calidad Litoral
+        $leydisUser = User::create([
+            'name' => 'Leydis Carolina Madera',
+            'email' => 'lider.calidad@espumadosdellitoral.com.co',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+        $leydisUser->assignRole('admin');
     }
 }

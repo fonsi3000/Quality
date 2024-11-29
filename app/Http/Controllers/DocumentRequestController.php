@@ -30,6 +30,9 @@ class DocumentRequestController extends Controller
         try {
             $query = DocumentRequest::with(['user', 'documentType', 'responsible']);
 
+            // Filter out published documents
+            $query->where('status', '!=', DocumentRequest::STATUS_PUBLICADO);
+
             // Filter for regular users to see only their requests
             if (Auth::user()->hasRole('user')) {
                 $query->where('user_id', Auth::id());
@@ -51,18 +54,14 @@ class DocumentRequestController extends Controller
 
             if ($request->has('status') && $request->status !== 'all') {
                 $query->where('status', $request->status);
-                
-                // For published documents, filter by user's process
-                if ($request->status === DocumentRequest::STATUS_PUBLICADO && Auth::user()->hasRole('user')) {
-                    $userProcess = Auth::user()->process;
-                    $query->whereHas('user', function($q) use ($userProcess) {
-                        $q->where('process', $userProcess);
-                    });
-                }
             }
 
             $documentRequests = $query->latest()->paginate(10);
-            $users = User::where('active', true)->get();
+            $users = User::where('active', true)
+            ->whereHas('roles', function($query) {
+                $query->whereIn('name', ['admin', 'agent']);
+            })
+            ->get();
 
             $statusClasses = [
                 DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
@@ -158,17 +157,27 @@ class DocumentRequestController extends Controller
                 $fileName = Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('documents', $fileName, 'public');
 
-                // Obtener el usuario actual con su proceso relacionado
                 $user = User::with('process')->find(Auth::id());
-                
-                // Log para debug
-                \Log::debug('User data:', [
-                    'user_id' => $user->id,
-                    'process_id' => $user->process_id,
-                    'process' => $user->process
-                ]);
-
                 $origin = $user->process ? $user->process->name : 'No especificado';
+
+                $emailParts = explode('@', $user->email);
+                $domain = isset($emailParts[1]) ? $emailParts[1] : '';
+
+                // Determinar el responsable basado en el dominio
+                $responsibleEmail = match($domain) {
+                    'espumadosdellitoral.com.co' => 'lider.calidad@espumadosdellitoral.com.co',
+                    'espumasmedellin.com.co' => 'lider.calidad@espumasmedellin.com.co',
+                    default => collect([
+                        'lider.calidad@espumadosdellitoral.com.co',
+                        'lider.calidad@espumasmedellin.com.co'
+                    ])->random()
+                };
+
+                $responsible = User::where('email', $responsibleEmail)->first();
+
+                if (!$responsible) {
+                    throw new \Exception('No se encontró un líder de calidad responsable.');
+                }
 
                 $documentRequest = DocumentRequest::create([
                     'request_type' => $validated['request_type'],
@@ -178,7 +187,7 @@ class DocumentRequestController extends Controller
                     'document_type_id' => $validated['document_type_id'],
                     'document_name' => $validated['document_name'],
                     'document_path' => $path,
-                    'responsible_id' => Auth::id(),
+                    'responsible_id' => $responsible->id,
                     'assigned_agent_id' => null,
                     'status' => DocumentRequest::STATUS_SIN_APROBAR,
                     'description' => $validated['description'],
@@ -196,7 +205,7 @@ class DocumentRequestController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             if (isset($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
@@ -204,6 +213,7 @@ class DocumentRequestController extends Controller
             Log::error('Error al crear DocumentRequest', [
                 'error' => $e->getMessage(),
                 'user' => Auth::id(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return redirect()
@@ -522,6 +532,17 @@ class DocumentRequestController extends Controller
 
             if (!$documentRequest->canBeAssigned()) {
                 throw new \Exception('Esta solicitud no puede ser asignada en su estado actual.');
+            }
+
+            // Verify the assigned user has the correct role
+            $assignedUser = User::whereId($validated['assigned_agent_id'])
+                ->whereHas('roles', function($query) {
+                    $query->whereIn('name', ['admin', 'agent']);
+                })
+                ->first();
+
+            if (!$assignedUser) {
+                throw new \Exception('El usuario asignado debe tener rol de administrador o agente.');
             }
 
             $documentRequest->update([
