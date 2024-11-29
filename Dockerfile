@@ -58,9 +58,9 @@ COPY . .
 
 # Configura el archivo .env
 RUN echo "APP_NAME=Qualy\n\
-APP_ENV=local\n\
+APP_ENV=production\n\
 APP_KEY=base64:Ob/xPP7Jdm3tJen53VDWZpMUbnvYr+37AJPSYSnd8mY=\n\
-APP_DEBUG=true\n\
+APP_DEBUG=false\n\
 APP_TIMEZONE=UTC\n\
 APP_URL=http://localhost\n\
 APP_LOCALE=en\n\
@@ -110,8 +110,16 @@ AWS_USE_PATH_STYLE_ENDPOINT=false\n\
 VITE_APP_NAME=\"\${APP_NAME}\"\n\
 OCTANE_SERVER=swoole" > .env
 
-# Instala dependencias de PHP
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# Instala dependencias de PHP y optimiza Composer
+RUN composer install --no-dev --optimize-autoloader --no-interaction && \
+    composer dump-autoload --optimize
+
+# Genera la clave de la aplicación si no existe
+RUN php artisan key:generate --force
+
+# Configura los permisos
+RUN chown -R www-data:www-data /app && \
+    chmod -R 775 storage bootstrap/cache
 
 # Instala Laravel Octane
 RUN composer require laravel/octane --no-interaction
@@ -119,16 +127,17 @@ RUN composer require laravel/octane --no-interaction
 # Instala Octane con Swoole
 RUN php artisan octane:install --server=swoole
 
-# Instala dependencias de Node.js y construye assets
-RUN npm install && \
-    npm run build
+# Instala dependencias de Node.js y construye assets para producción
+RUN npm ci && \
+    npm run build && \
+    npm cache clean --force
 
-# Configura los permisos
-RUN chown -R www-data:www-data /app && \
-    chmod -R 775 storage bootstrap/cache
-
-# Genera la clave de la aplicación si no existe
-RUN php artisan key:generate --force
+# Optimiza Laravel para producción
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    php artisan event:cache && \
+    php artisan icons:cache
 
 # Crea un script de inicio robusto
 RUN echo '#!/bin/bash\n\
@@ -160,17 +169,17 @@ done\n\
 echo "Running migrations..."\n\
 php artisan migrate --force\n\
 \n\
-# Inicia el servidor de desarrollo de Node\n\
-echo "Starting Vite development server..."\n\
-npm run dev & \n\
+# Limpia y optimiza la aplicación\n\
+php artisan optimize:clear\n\
+php artisan optimize\n\
 \n\
 # Inicia Laravel Octane\n\
 echo "Starting Laravel Octane..."\n\
-php artisan octane:start --server=swoole --host=0.0.0.0 --port=80 --workers=4 --task-workers=2\n\
+php artisan octane:start --server=swoole --host=0.0.0.0 --port=80 --workers=4 --task-workers=2 --max-requests=1000\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 # Comando para iniciar todos los servicios
 CMD ["/app/start.sh"]
 
-# Expone los puertos necesarios
-EXPOSE 80 5173
+# Expone el puerto 80
+EXPOSE 80
