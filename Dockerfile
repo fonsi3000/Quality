@@ -15,8 +15,22 @@ RUN apt-get update && apt-get upgrade -y && \
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
-# Instala MySQL
-RUN apt-get install -y mysql-server
+# Instala MySQL y realiza la configuración inicial
+RUN apt-get install -y mysql-server && \
+    mkdir -p /var/run/mysqld && \
+    chown mysql:mysql /var/run/mysqld && \
+    echo "[mysqld]" >> /etc/mysql/my.cnf && \
+    echo "bind-address = 0.0.0.0" >> /etc/mysql/my.cnf && \
+    service mysql start && \
+    while ! mysqladmin ping -h"localhost" --silent; do \
+        sleep 1; \
+    done && \
+    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
+    mysql -u root -pE5pum452025*. -e "CREATE DATABASE quality_db;" && \
+    mysql -u root -pE5pum452025*. -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
+    mysql -u root -pE5pum452025*. -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;" && \
+    mysql -u root -pE5pum452025*. -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" && \
+    mysql -u root -pE5pum452025*. -e "FLUSH PRIVILEGES;"
 
 # Agrega el repositorio de PHP 8.2 y lo instala junto con las extensiones requeridas
 RUN add-apt-repository ppa:ondrej/php -y && \
@@ -32,15 +46,6 @@ RUN pecl install swoole && \
 
 # Instala Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Configura MySQL con permisos adecuados
-RUN service mysql start && \
-    mysql -e "CREATE DATABASE quality_db;" && \
-    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
-    mysql -e "CREATE USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
-    mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;" && \
-    mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" && \
-    mysql -e "FLUSH PRIVILEGES;"
 
 # Establece el directorio de trabajo
 WORKDIR /app
