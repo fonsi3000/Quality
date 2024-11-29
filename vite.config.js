@@ -9,13 +9,19 @@ export default defineConfig({
         }),
     ],
     server: {
-        host: '0.0.0.0',
-        port: 5173,
+        host: true,
         hmr: {
-            host: window.location.hostname,
-        },
-        watch: {
-            usePolling: true,
+            host: process.env.VITE_DEV_SERVER_HOST || 'localhost',
         },
     },
+    build: {
+        // Opciones de construcción para producción
+        manifest: true,
+        outDir: 'public/build',
+        rollupOptions: {
+            input: {
+                app: 'resources/js/app.js',
+            },
+        },
+    }
 });

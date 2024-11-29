@@ -108,18 +108,12 @@ AWS_DEFAULT_REGION=us-east-1\n\
 AWS_BUCKET=\n\
 AWS_USE_PATH_STYLE_ENDPOINT=false\n\
 VITE_APP_NAME=\"\${APP_NAME}\"\n\
+VITE_DEV_SERVER_HOST=localhost\n\
 OCTANE_SERVER=swoole" > .env
 
 # Instala dependencias de PHP y optimiza Composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction && \
     composer dump-autoload --optimize
-
-# Genera la clave de la aplicación si no existe
-RUN php artisan key:generate --force
-
-# Configura los permisos
-RUN chown -R www-data:www-data /app && \
-    chmod -R 775 storage bootstrap/cache
 
 # Instala Laravel Octane
 RUN composer require laravel/octane --no-interaction
@@ -127,17 +121,25 @@ RUN composer require laravel/octane --no-interaction
 # Instala Octane con Swoole
 RUN php artisan octane:install --server=swoole
 
+# Configura los permisos iniciales
+RUN chown -R www-data:www-data /app && \
+    chmod -R 775 storage bootstrap/cache
+
 # Instala dependencias de Node.js y construye assets para producción
-RUN npm ci && \
+ENV NODE_ENV=production
+RUN npm install && \
     npm run build && \
+    rm -rf node_modules && \
     npm cache clean --force
 
 # Optimiza Laravel para producción
 RUN php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
-    php artisan event:cache && \
-    php artisan icons:cache
+    php artisan event:cache
+
+# Genera la clave de la aplicación si no existe
+RUN php artisan key:generate --force
 
 # Crea un script de inicio robusto
 RUN echo '#!/bin/bash\n\
