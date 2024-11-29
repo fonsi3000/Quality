@@ -8,20 +8,13 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    server: {
-        host: true,
-        hmr: {
-            host: process.env.VITE_DEV_SERVER_HOST || 'localhost',
-        },
-    },
     build: {
-        // Opciones de construcción para producción
-        manifest: true,
         outDir: 'public/build',
+        manifest: true,
         rollupOptions: {
             input: {
                 app: 'resources/js/app.js',
             },
         },
-    }
+    },
 });
