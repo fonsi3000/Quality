@@ -1,33 +1,14 @@
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV TZ=UTC
 
-# Sistema base y utilidades
 RUN apt-get update && apt-get upgrade -y && \
-   apt-get install -y \
-   bash \
-   git \
-   sudo \
-   openssh-client \
-   libxml2-dev \
-   libonig-dev \
-   autoconf \
-   gcc \
-   g++ \
-   make \
-   libfreetype6-dev \
-   libjpeg-turbo8-dev \
-   libpng-dev \
-   libzip-dev \
-   curl \
-   unzip \
-   nano \
-   software-properties-common \
-   default-mysql-client \
-   sqlite3 \
-   cron
+   apt-get install -y bash git sudo openssh-client \
+   libxml2-dev libonig-dev autoconf gcc g++ make \
+   libfreetype6-dev libjpeg-turbo8-dev libpng-dev libzip-dev \
+   curl unzip nano software-properties-common
 
 # Node.js y NPM
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
@@ -54,27 +35,12 @@ RUN apt-get install -y mysql-server && \
    mysql -u root -pE5pum452025*. -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" && \
    mysql -u root -pE5pum452025*. -e "FLUSH PRIVILEGES;"
 
-# PHP y extensiones
+# PHP 8.2
 RUN add-apt-repository ppa:ondrej/php -y && \
    apt-get update && \
-   apt-get install -y \
-   php8.2 \
-   php8.2-fpm \
-   php8.2-cli \
-   php8.2-common \
-   php8.2-mysql \
-   php8.2-zip \
-   php8.2-gd \
-   php8.2-mbstring \
-   php8.2-curl \
-   php8.2-xml \
-   php8.2-bcmath \
-   php8.2-intl \
-   php8.2-readline \
-   php8.2-pcov \
-   php8.2-dev \
-   php8.2-sqlite3 \
-   php8.2-redis
+   apt-get install -y php8.2 php8.2-fpm php8.2-cli php8.2-common \
+   php8.2-mysql php8.2-zip php8.2-gd php8.2-mbstring php8.2-curl php8.2-xml php8.2-bcmath \
+   php8.2-intl php8.2-readline php8.2-pcov php8.2-dev
 
 # Swoole
 RUN pecl install swoole && \
@@ -86,25 +52,18 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 WORKDIR /app
 
-# Copia archivos de configuración primero para aprovechar la caché de Docker
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-# Node.js dependencies y build
-COPY package*.json ./
-RUN npm install && \
-   NODE_ENV=production npm run build && \
-   rm -rf node_modules && \
-   npm cache clean --force
-
-# Código fuente
 COPY . .
+
+RUN composer install
+
+# NPM install y dev server
+RUN npm install
 
 # Crear y configurar el archivo .env
 RUN echo "APP_NAME=Quality\n\
-APP_ENV=production\n\
+APP_ENV=local\n\
 APP_KEY=\n\
-APP_DEBUG=false\n\
+APP_DEBUG=true\n\
 APP_URL=http://localhost\n\
 \n\
 LOG_CHANNEL=stack\n\
@@ -122,7 +81,7 @@ BROADCAST_DRIVER=log\n\
 CACHE_DRIVER=file\n\
 FILESYSTEM_DISK=local\n\
 QUEUE_CONNECTION=sync\n\
-SESSION_DRIVER=database\n\
+SESSION_DRIVER=file\n\
 SESSION_LIFETIME=120\n\
 \n\
 MEMCACHED_HOST=127.0.0.1\n\
@@ -159,70 +118,49 @@ VITE_PUSHER_APP_KEY='${PUSHER_APP_KEY}'\n\
 VITE_PUSHER_HOST='${PUSHER_HOST}'\n\
 VITE_PUSHER_PORT='${PUSHER_PORT}'\n\
 VITE_PUSHER_SCHEME='${PUSHER_SCHEME}'\n\
-VITE_PUSHER_APP_CLUSTER='${PUSHER_APP_CLUSTER}'\n\
-\n\
-OCTANE_SERVER=swoole" > .env
+VITE_PUSHER_APP_CLUSTER='${PUSHER_APP_CLUSTER}'\n" > .env
 
 # Generación de key y optimizaciones
 RUN php artisan key:generate --force && \
    composer dump-autoload --optimize
 
-# Laravel Octane
-RUN composer require laravel/octane --no-interaction && \
-   php artisan octane:install --server=swoole
-
-# Optimizaciones de Laravel
-RUN php artisan config:cache && \
-   php artisan route:cache && \
-   php artisan view:cache && \
-   php artisan event:cache
-
-# Storage link y permisos
+# Laravel Storage Link
 RUN php artisan storage:link && \
    chown -R www-data:www-data /app && \
    chmod -R 775 storage bootstrap/cache && \
    chmod -R 775 public
 
-# Script de inicio mejorado
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "Configurando MySQL..."\n\
-mkdir -p /var/run/mysqld /var/lib/mysql\n\
-chown -R mysql:mysql /var/run/mysqld /var/lib/mysql\n\
-\n\
-echo "Iniciando MySQL..."\n\
-service mysql start\n\
-\n\
-echo "Esperando que MySQL esté listo..."\n\
-for i in {1..30}; do\n\
-   if mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
-       echo "MySQL está listo"\n\
-       break\n\
+   RUN echo '#!/bin/bash\n\
+   set -e\n\
+   \n\
+   echo "Configurando MySQL..."\n\
+   mkdir -p /var/run/mysqld /var/lib/mysql\n\
+   chown -R mysql:mysql /var/run/mysqld /var/lib/mysql\n\
+   \n\
+   echo "Iniciando MySQL..."\n\
+   service mysql start\n\
+   \n\
+   echo "Esperando que MySQL esté listo..."\n\
+   for i in {1..30}; do\n\
+       if mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
+           echo "MySQL está listo"\n\
+           break\n\
+       fi\n\
+       echo "Intento $i/30..."\n\
+       sleep 1\n\
+   done\n\
+   \n\
+   if ! mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
+       echo "MySQL no pudo iniciarse correctamente"\n\
+       exit 1\n\
    fi\n\
-   echo "Intento $i/30..."\n\
-   sleep 1\n\
-done\n\
-\n\
-if ! mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
-   echo "MySQL no pudo iniciarse correctamente"\n\
-   exit 1\n\
-fi\n\
-\n\
-echo "Ejecutando migraciones..."\n\
-php artisan migrate --force\n\
-\n\
-echo "Limpiando y optimizando caché..."\n\
-php artisan optimize:clear\n\
-php artisan optimize\n\
-\n\
-echo "Iniciando Laravel Octane..."\n\
-php artisan octane:start --server=swoole --host=0.0.0.0 --port=80 --workers=4 --task-workers=2 --max-requests=1000\n\
-' > /app/start.sh && chmod +x /app/start.sh
-
-# Limpieza final
-RUN apt-get clean && \
-   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+   \n\
+   echo "Ejecutando migraciones y seeders..."\n\
+   php artisan migrate:fresh --seed --force\n\
+   \n\
+   echo "Iniciando servidor de desarrollo..."\n\
+   npm run dev & php artisan serve --host=0.0.0.0 --port=80\n\
+   ' > /app/start.sh && chmod +x /app/start.sh
 
 CMD ["/app/start.sh"]
-EXPOSE 80
+EXPOSE 80 5173
