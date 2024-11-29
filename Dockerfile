@@ -10,12 +10,10 @@ RUN apt-get update && apt-get upgrade -y && \
    libfreetype6-dev libjpeg-turbo8-dev libpng-dev libzip-dev \
    curl unzip nano software-properties-common
 
-# Node.js y NPM
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
    apt-get install -y nodejs && \
    npm install -g npm@latest
 
-# MySQL
 RUN apt-get install -y mysql-server && \
    mkdir -p /var/run/mysqld /var/lib/mysql && \
    chown -R mysql:mysql /var/run/mysqld /var/lib/mysql && \
@@ -35,19 +33,16 @@ RUN apt-get install -y mysql-server && \
    mysql -u root -pE5pum452025*. -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" && \
    mysql -u root -pE5pum452025*. -e "FLUSH PRIVILEGES;"
 
-# PHP 8.2
 RUN add-apt-repository ppa:ondrej/php -y && \
    apt-get update && \
    apt-get install -y php8.2 php8.2-fpm php8.2-cli php8.2-common \
    php8.2-mysql php8.2-zip php8.2-gd php8.2-mbstring php8.2-curl php8.2-xml php8.2-bcmath \
    php8.2-intl php8.2-readline php8.2-pcov php8.2-dev
 
-# Swoole
 RUN pecl install swoole && \
    echo "extension=swoole.so" > /etc/php/8.2/mods-available/swoole.ini && \
    phpenmod swoole
 
-# Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /app
@@ -56,10 +51,8 @@ COPY . .
 
 RUN composer install
 
-# NPM install y dev server
 RUN npm install
 
-# Crear y configurar el archivo .env
 RUN echo "APP_NAME=Quality\n\
 APP_ENV=local\n\
 APP_KEY=\n\
@@ -120,47 +113,48 @@ VITE_PUSHER_PORT='${PUSHER_PORT}'\n\
 VITE_PUSHER_SCHEME='${PUSHER_SCHEME}'\n\
 VITE_PUSHER_APP_CLUSTER='${PUSHER_APP_CLUSTER}'\n" > .env
 
-# Generación de key y optimizaciones
 RUN php artisan key:generate --force && \
    composer dump-autoload --optimize
 
-# Laravel Storage Link
 RUN php artisan storage:link && \
    chown -R www-data:www-data /app && \
    chmod -R 775 storage bootstrap/cache && \
    chmod -R 775 public
 
-   RUN echo '#!/bin/bash\n\
-   set -e\n\
-   \n\
-   echo "Configurando MySQL..."\n\
-   mkdir -p /var/run/mysqld /var/lib/mysql\n\
-   chown -R mysql:mysql /var/run/mysqld /var/lib/mysql\n\
-   \n\
-   echo "Iniciando MySQL..."\n\
-   service mysql start\n\
-   \n\
-   echo "Esperando que MySQL esté listo..."\n\
-   for i in {1..30}; do\n\
-       if mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
-           echo "MySQL está listo"\n\
-           break\n\
-       fi\n\
-       echo "Intento $i/30..."\n\
-       sleep 1\n\
-   done\n\
-   \n\
-   if ! mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
-       echo "MySQL no pudo iniciarse correctamente"\n\
-       exit 1\n\
-   fi\n\
-   \n\
-   echo "Ejecutando migraciones y seeders..."\n\
-   php artisan migrate:fresh --seed --force\n\
-   \n\
-   echo "Iniciando servidor de desarrollo..."\n\
-   npm run dev & php artisan serve --host=0.0.0.0 --port=80\n\
-   ' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Configurando MySQL..."\n\
+mkdir -p /var/run/mysqld /var/lib/mysql\n\
+chown -R mysql:mysql /var/run/mysqld /var/lib/mysql\n\
+\n\
+echo "Iniciando MySQL..."\n\
+service mysql start\n\
+\n\
+echo "Esperando que MySQL esté listo..."\n\
+for i in {1..30}; do\n\
+    if mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
+        echo "MySQL está listo"\n\
+        break\n\
+    fi\n\
+    echo "Intento $i/30..."\n\
+    sleep 1\n\
+done\n\
+\n\
+if ! mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
+    echo "MySQL no pudo iniciarse correctamente"\n\
+    exit 1\n\
+fi\n\
+\n\
+echo "Construyendo assets con Vite..."\n\
+npm run build\n\
+\n\
+echo "Ejecutando migraciones y seeders..."\n\
+php artisan migrate:fresh --seed --force\n\
+\n\
+echo "Iniciando Octane con Swoole..."\n\
+php artisan octane:start --server=swoole --host=0.0.0.0 --port=80\n\
+' > /app/start.sh && chmod +x /app/start.sh
 
 CMD ["/app/start.sh"]
-EXPOSE 80 5173
+EXPOSE 80
