@@ -15,17 +15,20 @@ RUN apt-get update && apt-get upgrade -y && \
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
-# Instala MySQL y realiza la configuración inicial
+# Instala y configura MySQL correctamente
 RUN apt-get install -y mysql-server && \
     mkdir -p /var/run/mysqld && \
-    chown mysql:mysql /var/run/mysqld && \
+    mkdir -p /var/lib/mysql && \
+    chown -R mysql:mysql /var/run/mysqld && \
+    chown -R mysql:mysql /var/lib/mysql && \
     echo "[mysqld]" >> /etc/mysql/my.cnf && \
+    echo "user = mysql" >> /etc/mysql/my.cnf && \
     echo "bind-address = 0.0.0.0" >> /etc/mysql/my.cnf && \
+    echo "skip-host-cache" >> /etc/mysql/my.cnf && \
+    echo "skip-name-resolve" >> /etc/mysql/my.cnf && \
     service mysql start && \
-    while ! mysqladmin ping -h"localhost" --silent; do \
-        sleep 1; \
-    done && \
-    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
+    sleep 5 && \
+    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
     mysql -u root -pE5pum452025*. -e "CREATE DATABASE quality_db;" && \
     mysql -u root -pE5pum452025*. -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'E5pum452025*.';" && \
     mysql -u root -pE5pum452025*. -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;" && \
@@ -127,25 +130,42 @@ RUN chown -R www-data:www-data /app && \
 # Genera la clave de la aplicación si no existe
 RUN php artisan key:generate --force
 
-# Ejecuta las migraciones
-RUN service mysql start && \
-    while ! mysqladmin ping -h"localhost" --silent; do sleep 1; done && \
-    php artisan migrate:fresh --force && \
-    php artisan db:seed --force
-
-# Optimizaciones para producción
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
-
-# Crea un script de inicio
+# Crea un script de inicio robusto
 RUN echo '#!/bin/bash\n\
+# Asegura los directorios de MySQL\n\
+mkdir -p /var/run/mysqld\n\
+mkdir -p /var/lib/mysql\n\
+chown -R mysql:mysql /var/run/mysqld\n\
+chown -R mysql:mysql /var/lib/mysql\n\
+\n\
+# Inicia MySQL con manejo de errores\n\
 service mysql start\n\
-while ! mysqladmin ping -h"localhost" --silent; do\n\
+status=$?\n\
+if [ $status -ne 0 ]; then\n\
+    echo "Failed to start MySQL: $status"\n\
+    exit $status\n\
+fi\n\
+\n\
+# Espera a que MySQL esté realmente disponible\n\
+echo "Waiting for MySQL to be ready..."\n\
+for i in {1..30}; do\n\
+    if mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
+        break\n\
+    fi\n\
+    echo "Waiting for MySQL to be ready... $i/30"\n\
     sleep 1\n\
 done\n\
+\n\
+# Ejecuta las migraciones\n\
+echo "Running migrations..."\n\
 php artisan migrate --force\n\
+\n\
+# Inicia el servidor de desarrollo de Node\n\
+echo "Starting Vite development server..."\n\
 npm run dev & \n\
+\n\
+# Inicia Laravel Octane\n\
+echo "Starting Laravel Octane..."\n\
 php artisan octane:start --server=swoole --host=0.0.0.0 --port=80 --workers=4 --task-workers=2\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
