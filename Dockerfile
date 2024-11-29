@@ -165,7 +165,7 @@ RUN php artisan key:generate --force && \
     composer dump-autoload --optimize
 
 # Build de assets y limpieza
-RUN npm install --global vite && \
+RUN npm install && \
     npm run build && \
     rm -rf node_modules && \
     npm cache clean --force
