@@ -50,6 +50,7 @@ WORKDIR /app
 COPY . .
 
 RUN composer install
+RUN composer require laravel/octane --with-all-dependencies
 
 RUN npm install
 
@@ -111,7 +112,8 @@ VITE_PUSHER_APP_KEY='${PUSHER_APP_KEY}'\n\
 VITE_PUSHER_HOST='${PUSHER_HOST}'\n\
 VITE_PUSHER_PORT='${PUSHER_PORT}'\n\
 VITE_PUSHER_SCHEME='${PUSHER_SCHEME}'\n\
-VITE_PUSHER_APP_CLUSTER='${PUSHER_APP_CLUSTER}'\n" > .env
+VITE_PUSHER_APP_CLUSTER='${PUSHER_APP_CLUSTER}'\n\
+OCTANE_SERVER=swoole\n" > .env
 
 RUN php artisan key:generate --force && \
    composer dump-autoload --optimize
@@ -146,6 +148,9 @@ if ! mysqladmin ping -h"localhost" -u"root" -p"E5pum452025*." --silent; then\n\
     exit 1\n\
 fi\n\
 \n\
+echo "Instalando dependencias de Octane..."\n\
+php artisan octane:install --server=swoole\n\
+\n\
 echo "Construyendo assets con Vite..."\n\
 npm run build\n\
 \n\
@@ -153,7 +158,7 @@ echo "Ejecutando migraciones y seeders..."\n\
 php artisan migrate:fresh --seed --force\n\
 \n\
 echo "Iniciando Octane con Swoole..."\n\
-php artisan octane:start --server=swoole --host=0.0.0.0 --port=80\n\
+php artisan octane:start --server=swoole --host=0.0.0.0 --port=80 --watch\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 CMD ["/app/start.sh"]
