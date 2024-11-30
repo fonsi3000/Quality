@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - APP_NAME=Quality
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=quality_db
+      - DB_USERNAME=quality
+      - DB_PASSWORD=E5pum452025*.
+    depends_on:
+      - db
+    networks:
+      - quality-network
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=quality_db
+      - MYSQL_USER=quality
+      - MYSQL_PASSWORD=E5pum452025*.
+      - MYSQL_ROOT_PASSWORD=E5pum452025*.
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - quality-network
+
+networks:
+  quality-network:
+    driver: bridge
+
+volumes:
+  db-data:
