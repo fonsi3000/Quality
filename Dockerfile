@@ -5,11 +5,12 @@ ENV TZ=UTC
 ENV NODE_ENV=production
 ENV VITE_HMR_HOST=localhost
 
+# Instalación de dependencias base
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y bash git sudo openssh-client \
     libxml2-dev libonig-dev autoconf gcc g++ make \
     libfreetype6-dev libjpeg-turbo8-dev libpng-dev libzip-dev \
-    curl unzip nano software-properties-common
+    curl unzip nano software-properties-common netcat
 
 # Instalación de Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
@@ -33,24 +34,34 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 WORKDIR /app
 
+# Copiar archivos de configuración npm
+COPY package*.json ./
+COPY vite.config.js ./
+
+# Instalación de dependencias Node.js y build
+RUN npm ci && \
+    npm install -D vite && \
+    npm install --save-dev laravel-vite-plugin@latest && \
+    npm install preline --save
+
+# Copiar el resto de archivos
 COPY . .
 
-# Instalación de dependencias y build
-RUN npm install && \
-    npm install --save-dev laravel-vite-plugin@latest && \
-    npm install preline --save && \
-    npm run build && \
+# Build de assets
+RUN npm run build && \
     rm -rf node_modules && \
     npm ci --omit=dev
 
+# Instalación de dependencias PHP
 RUN composer install --no-interaction --no-dev --optimize-autoloader && \
     composer require laravel/octane --with-all-dependencies
 
 # Configuración de permisos
-RUN php artisan storage:link && \
-    chown -R www-data:www-data /app && \
-    chmod -R 775 storage bootstrap/cache && \
-    chmod -R 775 public
+RUN chmod -R 775 storage bootstrap/cache public && \
+    chown -R www-data:www-data /app
+
+# Configuración del storage link
+RUN php artisan storage:link
 
 # Script de inicio
 COPY docker-entrypoint.sh /usr/local/bin/

@@ -22,6 +22,9 @@ services:
       - db
     networks:
       - quality-network
+    volumes:
+      - ./storage:/app/storage
+    restart: unless-stopped
 
   db:
     image: mysql:8.0
@@ -36,6 +39,7 @@ services:
       - db-data:/var/lib/mysql
     networks:
       - quality-network
+    restart: unless-stopped
 
 networks:
   quality-network:
