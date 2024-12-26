@@ -12,12 +12,6 @@ RUN apt-get update && apt-get upgrade -y && \
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
-RUN apt-get install -y mysql-server && \
-    mkdir -p /var/run/mysqld && \
-    mkdir -p /var/lib/mysql && \
-    chown -R mysql:mysql /var/run/mysqld && \
-    chown -R mysql:mysql /var/lib/mysql
-
 RUN add-apt-repository ppa:ondrej/php -y && \
     apt-get update && \
     apt-get install -y php8.2 php8.2-fpm php8.2-cli php8.2-common \
