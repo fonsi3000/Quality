@@ -30,7 +30,7 @@ class UnitController extends Controller
         $units = $query->paginate(10);
         $units->appends($request->except('page'));
 
-        return view('units.index', compact('units'));
+        return view('Units.index', compact('units'));
     }
 
     public function create()
