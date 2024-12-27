@@ -188,7 +188,7 @@
                                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                                         @switch($role->name)
                                             @case('admin')
-                                                Líder de Calidad
+                                                Administrador
                                                 @break
                                             @case('agent')
                                                 Profesional de Calidad

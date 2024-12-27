@@ -738,66 +738,66 @@ class DocumentRequestController extends Controller
    }
 
    public function published(Request $request)
-{
-   try {
-       $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent'])
-           ->where('status', DocumentRequest::STATUS_PUBLICADO);
+    {
+    try {
+        $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent'])
+            ->where('status', DocumentRequest::STATUS_PUBLICADO);
 
-       // Filtrar por el proceso del usuario 
-       if (Auth::user()->hasRole('user')) {
-           $userProcessId = Auth::user()->process_id;
-           $query->whereHas('user', function($q) use ($userProcessId) {
-               $q->where('process_id', $userProcessId);
-           });
-       }
+        // Filtrar por el proceso del usuario 
+        if (Auth::user()->hasRole('user')) {
+            $userProcessId = Auth::user()->process_id;
+            $query->whereHas('user', function($q) use ($userProcessId) {
+                $q->where('process_id', $userProcessId);
+            });
+        }
 
-       if ($request->has('search')) {
-           $searchTerm = $request->search;
-           $query->where(function($q) use ($searchTerm) {
-               $q->where('document_name', 'like', "%{$searchTerm}%")
-                   ->orWhere('description', 'like', "%{$searchTerm}%")
-                   ->orWhereHas('documentType', function($q) use ($searchTerm) {
-                       $q->where('name', 'like', "%{$searchTerm}%");
-                   })
-                   ->orWhereHas('user', function($q) use ($searchTerm) {
-                       $q->where('name', 'like', "%{$searchTerm}%");
-                   });
-           });
-       }
+        if ($request->has('search')) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('document_name', 'like', "%{$searchTerm}%")
+                    ->orWhere('description', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('documentType', function($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    })
+                    ->orWhereHas('user', function($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    });
+            });
+        }
 
-       if ($request->has('document_type_id') && $request->document_type_id != 'all') {
-           $query->where('document_type_id', $request->document_type_id);
-       }
+        if ($request->has('document_type_id') && $request->document_type_id != 'all') {
+            $query->where('document_type_id', $request->document_type_id);
+        }
 
-       $documentRequests = $query->latest()->paginate(10);
-       $users = User::where('active', true)->get();
-       $documentTypes = DocumentType::where('is_active', true)->get();
+        $documentRequests = $query->latest()->paginate(10);
+        $users = User::where('active', true)->get();
+        $documentTypes = DocumentType::where('is_active', true)->get();
 
-       $statusClasses = [
-           DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-           DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-           DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-           DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-           DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-       ];
+        $statusClasses = [
+            DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+            DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+            DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+            DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+            DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+        ];
 
-       $statusLabels = DocumentRequest::getStatusOptions();
+        $statusLabels = DocumentRequest::getStatusOptions();
 
-       return view('documents.published', compact(
-           'documentRequests', 
-           'statusClasses',
-           'statusLabels',
-           'users',
-           'documentTypes'
-       ));
-   } catch (\Exception $e) {
-       Log::error('Error en published DocumentRequest', [
-           'error' => $e->getMessage()
-       ]);
+        return view('documents.published', compact(
+            'documentRequests', 
+            'statusClasses',
+            'statusLabels',
+            'users',
+            'documentTypes'
+        ));
+    } catch (\Exception $e) {
+        Log::error('Error en published DocumentRequest', [
+            'error' => $e->getMessage()
+        ]);
 
-       return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
-   }
-}
+        return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+    }
+    }
 
    public function approve(Request $request, DocumentRequest $documentRequest)
    {
