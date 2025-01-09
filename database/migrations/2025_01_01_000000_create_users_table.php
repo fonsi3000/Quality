@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,20 +15,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('profile_photo')->nullable();
-            $table->boolean('active')->default(true); // Campo agregado
-            // Agregamos las relaciones
-            $table->foreignId('unit_id')
-                  ->nullable()
-                  ->constrained()
-                  ->nullOnDelete();
-            $table->foreignId('process_id')
-                  ->nullable()
-                  ->constrained()
-                  ->nullOnDelete();
-            $table->foreignId('position_id')
-                  ->nullable()
-                  ->constrained()
-                  ->nullOnDelete();
+            $table->boolean('active')->default(true);
             $table->rememberToken();
             $table->timestamps();
         });

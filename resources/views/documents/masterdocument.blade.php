@@ -1,18 +1,20 @@
 @extends('layouts.app')
 
-@section('title', 'Documentos Vigentes')
+@section('title', 'Listado Maestro de Documentos')
 
 @section('content')
-<!-- Sección de Búsqueda y Filtros -->
 <div class="space-y-4">
     <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Documentos Vigentes
+            Listado Maestro de Documentos
         </h1>
-        
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+            Gestión y seguimiento de documentos obsoletos
+        </p>
     </div>
+    <!-- Sección de Búsqueda y Filtros -->
     <div class="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-xl p-4">
-        <form action="{{ route('documents.published') }}" method="GET">
+        <form id="filter-form" action="{{ route('documents.masterdocument') }}" method="GET">
             @csrf 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Búsqueda por texto -->
@@ -71,7 +73,7 @@
 
             <!-- Botones de Acción -->
             <div class="mt-4 flex justify-end gap-x-2">
-                <a href="{{ route('documents.published') }}" 
+                <a href="{{ route('documents.masterdocument') }}" 
                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
                     Limpiar filtros
                 </a>
@@ -98,21 +100,14 @@
                                 <th scope="col" class="px-4 py-3 text-start">
                                     <div class="flex items-center gap-x-2">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
+                                            Código
+                                        </span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-start">
+                                    <div class="flex items-center gap-x-2">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
                                             Nombre del Documento
-                                        </span>
-                                    </div>
-                                </th>
-                                <th scope="col" class="px-4 py-3 text-start">
-                                    <div class="flex items-center gap-x-2">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
-                                            Origen
-                                        </span>
-                                    </div>
-                                </th>
-                                <th scope="col" class="px-4 py-3 text-start">
-                                    <div class="flex items-center gap-x-2">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
-                                            Responsable
                                         </span>
                                     </div>
                                 </th>
@@ -126,7 +121,21 @@
                                 <th scope="col" class="px-4 py-3 text-start">
                                     <div class="flex items-center gap-x-2">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
-                                            Fecha Publicación
+                                            Fecha de Vigencia
+                                        </span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-start">
+                                    <div class="flex items-center gap-x-2">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
+                                            Proceso
+                                        </span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-start">
+                                    <div class="flex items-center gap-x-2">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
+                                            Estado
                                         </span>
                                     </div>
                                 </th>
@@ -142,24 +151,19 @@
                             @foreach($documentRequests as $request)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800">
                                     <td class="px-4 py-4">
+                                        <span class="text-sm text-gray-800 dark:text-neutral-200">
+                                            {{ $request->document_code }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4">
                                         <div class="flex flex-col">
                                             <span class="text-sm font-medium text-gray-800 dark:text-neutral-200">
                                                 {{ $request->document_name }}
                                             </span>
-                                            {{-- <span class="text-xs text-gray-500 dark:text-neutral-400">
+                                            <span class="text-xs text-gray-500 dark:text-neutral-400">
                                                 {{ $request->documentType->name }}
-                                            </span> --}}
+                                            </span>
                                         </div>
-                                    </td>
-                                    <td class="px-4 py-4">
-                                        <span class="text-sm text-gray-800 dark:text-neutral-200">
-                                            {{ $request->origin }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-4">
-                                        <span class="text-sm text-gray-800 dark:text-neutral-200">
-                                            {{ $request->responsible->name }}
-                                        </span>
                                     </td>
                                     <td class="px-4 py-4">
                                         <span class="text-sm text-gray-800 dark:text-neutral-200">
@@ -168,7 +172,17 @@
                                     </td>
                                     <td class="px-4 py-4">
                                         <span class="text-sm text-gray-800 dark:text-neutral-200">
-                                            {{ $request->updated_at->format('d/m/Y H:i') }}
+                                            {{ $request->updated_at->format('d/m/Y') }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <span class="text-sm text-gray-800 dark:text-neutral-200">
+                                            {{ $request->process->name }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-sm font-medium {{ $statusClasses[$request->status] }}">
+                                            {{ $statusLabels[$request->status] }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-4 text-end sticky right-0 bg-white dark:bg-neutral-900">
@@ -181,8 +195,18 @@
                                                     <circle cx="12" cy="12" r="3"/>
                                                 </svg>
                                             </button>
+                                            @if($request->final_document_path)
+                                            <a href="{{ route('documents.requests.download-final', $request->id) }}"
+                                               class="text-blue-600 hover:text-blue-400 dark:text-blue-500 dark:hover:text-blue-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                    <polyline points="7 10 12 15 17 10"/>
+                                                    <line x1="12" x2="12" y1="15" y2="3"/>
+                                                </svg>
+                                            </a>
+                                            @endif
                                         </div>
-                                     </td>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -472,7 +496,7 @@
                                     </div>
                                 </div>
                                 @endif
-                                @can('admin.agent')
+
                                 <!-- Historial de Versiones -->
                                 @if($request->hasReferenceDocument() || $request->hasReferencingDocuments())
                                 <div class="mt-6">
@@ -542,44 +566,6 @@
                                 </div>
                                 @endif
                             </div>
-
-                            <!-- Acciones Disponibles -->
-                            
-                            <div class="bg-gray-50 rounded-xl p-6 dark:bg-neutral-700 border border-gray-100 dark:border-neutral-600">
-                                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                                    <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                    </svg>
-                                    Acciones Disponibles
-                                </h4>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <a href="{{ route('documents.requests.edit', $request->id) }}"
-                                    class="inline-flex justify-center items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-lg hover:bg-blue-200 transition-colors">
-                                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                        Editar Documento
-                                    </a>
-
-                                    <button type="button"
-                                            onclick="if(confirm('¿Estás seguro de que deseas eliminar este documento?')) document.getElementById('delete-form-{{ $request->id }}').submit();"
-                                            class="inline-flex justify-center items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-transparent rounded-lg hover:bg-red-200 transition-colors">
-                                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                        Eliminar Documento
-                                    </button>
-
-                                    <form id="delete-form-{{ $request->id }}" 
-                                        action="{{ route('documents.requests.destroy', $request->id) }}" 
-                                        method="POST" 
-                                        style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-                                </div>
-                            </div>
-                        @endcan
                         </div>
                     </div>
                 </div>
@@ -604,72 +590,70 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('filter-form');
-        const searchInput = document.getElementById('search');
-        const typeFilter = document.getElementById('document_type_id');
-        const dateFromInput = document.getElementById('date_from');
-        const dateToInput = document.getElementById('date_to');
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filter-form');
+    const searchInput = document.getElementById('search');
+    const typeFilter = document.getElementById('document_type_id');
+    const dateFromInput = document.getElementById('date_from');
+    const dateToInput = document.getElementById('date_to');
 
-        function updateURL(params) {
-            const url = new URL(window.location.href);
-            
-            // Limpiar parámetros existentes
-            url.searchParams.forEach((value, key) => {
-                if (!params.has(key)) {
-                    url.searchParams.delete(key);
-                }
-            });
-            
-            // Agregar nuevos parámetros
-            params.forEach((value, key) => {
-                if (value) {
-                    url.searchParams.set(key, value);
-                } else {
-                    url.searchParams.delete(key);
-                }
-            });
-            
-            // Actualizar URL sin recargar la página
-            window.history.pushState({}, '', url);
-            
-            // Hacer la petición
-            fetch(url.toString(), {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.text())
-            .then(html => {
-                // Actualizar solo la tabla de resultados
-                document.querySelector('.table-container').innerHTML = html;
-            })
-            .catch(error => console.error('Error:', error));
-        }
-
-        // Función para aplicar los filtros
-        function applyFilters() {
-            const formData = new FormData(form);
-            updateURL(formData);
-        }
-
-        // Event listeners
-        typeFilter.addEventListener('change', applyFilters);
-        dateFromInput.addEventListener('change', applyFilters);
-        dateToInput.addEventListener('change', applyFilters);
-
-        // Debounce para la búsqueda por texto
-        let timeout = null;
-        searchInput.addEventListener('input', function() {
-            clearTimeout(timeout);
-            timeout = setTimeout(applyFilters, 500);
+    // Función simple para actualizar la página con los filtros
+    function updateFilters() {
+        // Construir la URL base
+        let url = new URL(window.location.href);
+        
+        // Actualizar parámetros
+        let formData = new FormData(form);
+        formData.forEach((value, key) => {
+            if (value) {
+                url.searchParams.set(key, value);
+            } else {
+                url.searchParams.delete(key);
+            }
         });
 
-        // Prevenir el submit por defecto del formulario
+        // Redireccionar con los nuevos parámetros
+        window.location.href = url.toString();
+    }
+
+    // Event listeners para los filtros
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function(e) {
+            e.preventDefault();
+            updateFilters();
+        });
+    }
+
+    if (dateFromInput) {
+        dateFromInput.addEventListener('change', function(e) {
+            e.preventDefault();
+            updateFilters();
+        });
+    }
+
+    if (dateToInput) {
+        dateToInput.addEventListener('change', function(e) {
+            e.preventDefault();
+            updateFilters();
+        });
+    }
+
+    // Debounce para la búsqueda
+    let timeout = null;
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(timeout);
+            timeout = setTimeout(updateFilters, 500);
+        });
+    }
+
+    // Prevenir el submit del formulario y manejar la búsqueda
+    if (form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            applyFilters();
+            updateFilters();
         });
-    });
+    }
+});
 </script>
 @endpush

@@ -37,90 +37,64 @@ class DocumentRequestController extends Controller
         try {
             $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'process']);
 
-            // Base query para los conteos
-            $baseQuery = DocumentRequest::query();
+            // Filtrar documentos publicados
+            $query->where('status', '!=', DocumentRequest::STATUS_PUBLICADO);
 
-            // Aplicar filtros de rol tanto al query principal como al de conteos
+            // Filtrar por usuario regular
             if (Auth::user()->hasRole('user')) {
                 $query->where('user_id', Auth::id());
-                $baseQuery->where('user_id', Auth::id());
             }
 
+            // Filtrar por líder de proceso
             if (Auth::user()->hasRole('leader')) {
                 $query->where('process_id', Auth::user()->process_id);
-                $baseQuery->where('process_id', Auth::user()->process_id);
             }
 
-            // Obtener conteo por estado excluyendo PUBLICADO
-            $statusCounts = $baseQuery
-                ->select('status', DB::raw('count(*) as count'))
-                ->where('status', '!=', DocumentRequest::STATUS_PUBLICADO)
-                ->groupBy('status')
-                ->pluck('count', 'status')
-                ->toArray();
-
-            // Filtrar documentos publicados
-            $query->whereNotIn('status', [
-                DocumentRequest::STATUS_PUBLICADO,
-                DocumentRequest::STATUS_OBSOLETO
-            ]);
-
-            // Aplicar búsqueda si existe un término
-            if ($request->filled('search')) {
+            // Aplicar búsqueda
+            if ($request->has('search')) {
                 $searchTerm = $request->search;
-                $query->where(function ($q) use ($searchTerm) {
+                $query->where(function($q) use ($searchTerm) {
                     $q->where('document_name', 'like', "%{$searchTerm}%")
-                        ->orWhere('description', 'like', "%{$searchTerm}%")
-                        ->orWhereHas('documentType', function ($q) use ($searchTerm) {
-                            $q->where('name', 'like', "%{$searchTerm}%");
-                        })
-                        ->orWhereHas('user', function ($q) use ($searchTerm) {
-                            $q->where('name', 'like', "%{$searchTerm}%");
-                        });
+                      ->orWhere('description', 'like', "%{$searchTerm}%")
+                      ->orWhereHas('documentType', function($q) use ($searchTerm) {
+                          $q->where('name', 'like', "%{$searchTerm}%");
+                      })
+                      ->orWhereHas('user', function($q) use ($searchTerm) {
+                          $q->where('name', 'like', "%{$searchTerm}%");
+                      });
                 });
             }
 
             // Filtrar por estado
-            if ($request->filled('status')) {
+            if ($request->has('status') && $request->status !== 'all') {
                 $query->where('status', $request->status);
             }
 
-            // Obtener resultados con paginación y mantener query string
-            $documentRequests = $query->latest()->paginate(10)->withQueryString();
-
-            // Obtener usuarios activos con roles admin o agent
+            $documentRequests = $query->latest()->paginate(10);
+            
             $users = User::where('active', true)
-                ->whereHas('roles', function ($query) {
+                ->whereHas('roles', function($query) {
                     $query->whereIn('name', ['admin', 'agent']);
                 })
                 ->get();
 
-            // Definir clases de estados
             $statusClasses = [
                 DocumentRequest::STATUS_PENDIENTE_LIDER => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
                 DocumentRequest::STATUS_RECHAZADO_LIDER => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
                 DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
                 DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
                 DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+                DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
                 DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
             ];
 
-            // Obtener solo las etiquetas de estados no publicados
-            $statusLabels = array_filter(
-                DocumentRequest::getStatusOptions(),
-                function ($key) {
-                    return $key !== DocumentRequest::STATUS_PUBLICADO;
-                },
-                ARRAY_FILTER_USE_KEY
-            );
+            $statusLabels = DocumentRequest::getStatusOptions();
 
-            // Retornar vista con todos los datos necesarios
             return view('document-requests.index', compact(
                 'documentRequests',
                 'statusClasses',
                 'statusLabels',
-                'users',
-                'statusCounts'
+                'users'
             ));
         } catch (\Exception $e) {
             Log::error('Error en index DocumentRequest', [
@@ -135,32 +109,41 @@ class DocumentRequestController extends Controller
     public function create()
     {
         try {
-            $documentTypes = DocumentType::where('is_active', true)->get();
-            $users = User::where('active', true)->get();
-
-            // Obtener documentos publicados
-            $publishedDocuments = DocumentRequest::with(['documentType'])
-                ->where('status', DocumentRequest::STATUS_PUBLICADO)
-                ->where(function ($query) {
-                    if (Auth::user()->hasRole('user')) {
-                        $query->whereHas('user', function ($q) {
-                            $q->where('process_id', Auth::user()->process_id);
-                        });
-                    }
-                })
-                ->get();
-
-            // Debug para ver la estructura exacta
-            Log::info('Documentos publicados:', [
-                'count' => $publishedDocuments->count(),
-                'first_doc' => $publishedDocuments->first()
+            Log::info('Iniciando creación de solicitud de documento', [
+                'user_id' => Auth::id(),
+                'user_process' => Auth::user()->process_id ?? 'No tiene proceso'
             ]);
 
-            return view('document-requests.create', compact('documentTypes', 'users', 'publishedDocuments'));
+            $documentTypes = DocumentType::where('is_active', true)->get();
+            Log::info('Tipos de documentos obtenidos', [
+                'count' => $documentTypes->count()
+            ]);
+
+            // Obtener documentos publicados con filtro de proceso
+            $query = DocumentRequest::with(['documentType'])
+                ->where('status', DocumentRequest::STATUS_PUBLICADO);
+
+            // Si es usuario regular, filtrar por proceso
+            if (Auth::user()->hasRole('user')) {
+                $query->whereHas('user', function($q) {
+                    $q->where('process_id', Auth::user()->process_id);
+                });
+            }
+
+            $publishedDocuments = $query->get();
+            
+            Log::info('Documentos publicados obtenidos', [
+                'count' => $publishedDocuments->count(),
+                'process_id' => Auth::user()->process_id ?? 'N/A'
+            ]);
+            
+            return view('document-requests.create', compact('documentTypes', 'publishedDocuments'));
+
         } catch (\Exception $e) {
             Log::error('Error en create DocumentRequest', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id()
             ]);
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
@@ -168,88 +151,77 @@ class DocumentRequestController extends Controller
 
     public function store(Request $request)
     {
-        if ($request->hasFile('document')) {
-            $file = $request->file('document');
-            Log::info('Intento de subida de archivo', [
-                'nombre_original' => $file->getClientOriginalName(),
-                'tipo_mime' => $file->getMimeType(),
-                'extension' => $file->getClientOriginalExtension(),
-                'tamaño' => $file->getSize()
-            ]);
-        }
-        // Validación actual...
-        $validated = $request->validate([
-            'request_type' => 'required|in:create,modify,obsolete',
-            'document' => 'required|file|max:20480|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
-            'description' => 'required|string',
-            'document_type_id' => $request->request_type === 'create' ? 'required|exists:document_types,id' : 'nullable',
-            'document_name' => $request->request_type === 'create' ? 'required|string|max:255' : 'nullable',
-            'existing_document_id' => in_array($request->request_type, ['modify', 'obsolete']) ? 'required|exists:document_requests,id' : 'nullable',
+        Log::info('Iniciando store de DocumentRequest', [
+            'request_data' => $request->except('document'),
+            'has_file' => $request->hasFile('document'),
+            'user_id' => Auth::id()
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Verificaciones del usuario y proceso...
-            $user = User::with('process')->find(Auth::id());
-            $userProcess = $user->process;
+            // 1. Validación inicial
+            $validated = $request->validate([
+                'request_type' => 'required|in:create,modify',
+                'document' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
+                'description' => 'required|string',
+                'document_type_id' => $request->request_type === 'create' ? 'required|exists:document_types,id' : 'nullable',
+                'document_name' => $request->request_type === 'create' ? 'required|string|max:255' : 'nullable',
+                'existing_document_id' => $request->request_type === 'modify' ? 'required|exists:document_requests,id' : 'nullable',
+            ]);
+
+            Log::info('Validación inicial exitosa', ['validated_data' => $validated]);
+
+            // 2. Verificación de proceso y líder
+            $userProcess = Auth::user()->process;
             if (!$userProcess) {
                 throw new \Exception('Usuario no tiene un proceso asignado.');
             }
 
             if (!$userProcess->leader_id) {
+                Log::warning('Proceso sin líder asignado', [
+                    'process_id' => $userProcess->id,
+                    'user_id' => Auth::id()
+                ]);
                 throw new \Exception(self::MESSAGE_ERROR_LEADER_PROCESS);
             }
 
+            // 3. Manejo del archivo
             if (!$request->hasFile('document')) {
                 throw new \Exception('No se ha proporcionado ningún archivo');
             }
 
-            // Lógica del responsable...
-            $emailParts = explode('@', $user->email);
-            $domain = isset($emailParts[1]) ? $emailParts[1] : '';
-
-            $responsibleEmail = match ($domain) {
-                'espumadosdellitoral.com.co' => 'lider.calidad@espumadosdellitoral.com.co',
-                'espumasmedellin.com.co' => 'lider.calidad@espumasmedellin.com.co',
-                default => collect([
-                    'lider.calidad@espumadosdellitoral.com.co',
-                    'lider.calidad@espumasmedellin.com.co'
-                ])->random()
-            };
-
-            $responsible = User::where('email', $responsibleEmail)->first();
-            if (!$responsible) {
-                throw new \Exception('No se encontró un líder de calidad responsable.');
-            }
-
             $path = $this->handleFileStorage($request->file('document'));
+            Log::info('Archivo almacenado correctamente', ['path' => $path]);
 
-            // Preparar datos base sin establecer el estado
+            // 4. Preparación de datos
             $documentData = [
                 'request_type' => $validated['request_type'],
                 'user_id' => Auth::id(),
                 'document_path' => $path,
                 'description' => $validated['description'],
+                'status' => DocumentRequest::STATUS_PENDIENTE_LIDER,
                 'process_id' => $userProcess->id,
                 'origin' => $userProcess->name,
-                'responsible_id' => $responsible->id,
-                'destination' => 'Calidad'
+                'version' => '1.0', // Agregar versión inicial
             ];
 
-            // Procesar según el tipo de solicitud
-            if (in_array($validated['request_type'], ['modify', 'obsolete'])) {
+            // 5. Procesamiento según tipo de solicitud
+            if ($validated['request_type'] === 'modify') {
                 $existingDocument = DocumentRequest::findOrFail($validated['existing_document_id']);
-
-                if (!$existingDocument || $existingDocument->status !== DocumentRequest::STATUS_PUBLICADO) {
-                    throw new \Exception('El documento seleccionado no está disponible para ' .
-                        ($validated['request_type'] === 'modify' ? 'modificación' : 'obsoletización'));
+                
+                if ($existingDocument->status !== DocumentRequest::STATUS_PUBLICADO) {
+                    throw new \Exception('El documento seleccionado no está disponible para modificación');
                 }
 
+                // Incrementar versión para modificación
+                $newVersion = floatval($existingDocument->version) + 0.1;
+                
                 $documentData = array_merge($documentData, [
                     'document_type_id' => $existingDocument->document_type_id,
                     'document_name' => $existingDocument->document_name,
                     'reference_document_id' => $existingDocument->id,
+                    'version' => number_format($newVersion, 1)
                 ]);
             } else {
                 $documentData = array_merge($documentData, [
@@ -258,37 +230,35 @@ class DocumentRequestController extends Controller
                 ]);
             }
 
-            // Crear el documento y establecer el estado inicial usando el método del modelo
-            $documentRequest = new DocumentRequest($documentData);
-            $documentRequest->setInitialStatus(); // Aplicamos la lógica del modelo
-            $documentRequest->save();
+            // 6. Crear el registro
+            $documentRequest = DocumentRequest::create($documentData);
 
             DB::commit();
 
             Log::info('Solicitud de documento creada exitosamente', [
                 'document_request_id' => $documentRequest->id,
                 'type' => $validated['request_type'],
-                'status' => $documentRequest->status,
                 'user_id' => Auth::id(),
-                'process_id' => $userProcess->id,
-                'responsible_id' => $responsible->id
+                'process_id' => $userProcess->id
             ]);
 
             return redirect()
                 ->route('documents.requests.index')
                 ->with('success', self::MESSAGE_SUCCESS_CREATE);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
             if (isset($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
+                Log::info('Archivo temporal eliminado', ['path' => $path]);
             }
 
             Log::error('Error al crear solicitud de documento', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'user_id' => Auth::id(),
-                'request' => $request->all()
+                'request_data' => $request->except('document')
             ]);
 
             return redirect()
@@ -302,7 +272,7 @@ class DocumentRequestController extends Controller
     {
         try {
             $documentRequest->load(['user', 'documentType', 'responsible', 'process']);
-
+            
             if (request()->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -320,7 +290,7 @@ class DocumentRequestController extends Controller
                         'description' => $documentRequest->description,
                         'observations' => $documentRequest->observations,
                         'leader_observations' => $documentRequest->leader_observations,
-                        'leader_approval_date' => $documentRequest->leader_approval_date ?
+                        'leader_approval_date' => $documentRequest->leader_approval_date ? 
                             $documentRequest->leader_approval_date->format('d/m/Y H:i') : null,
                         'user' => [
                             'id' => $documentRequest->user->id,
@@ -339,6 +309,7 @@ class DocumentRequestController extends Controller
             }
 
             return view('document-requests.show', compact('documentRequest'));
+
         } catch (\Exception $e) {
             Log::error('Error en show DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -362,8 +333,9 @@ class DocumentRequestController extends Controller
     public function edit(DocumentRequest $documentRequest)
     {
         try {
+            // Verificar si el usuario puede editar el documento
             if (!$documentRequest->canBeEdited()) {
-                throw new \Exception('Esta solicitud no puede ser editada en su estado actual.');
+                return redirect()->back()->with('error', 'No se puede editar el documento en su estado actual.');
             }
 
             $documentTypes = DocumentType::where('is_active', true)->get();
@@ -393,16 +365,32 @@ class DocumentRequestController extends Controller
         try {
             DB::beginTransaction();
 
+            // Verificar si el documento puede ser editado
             if (!$documentRequest->canBeEdited()) {
-                throw new \Exception('Esta solicitud no puede ser editada en su estado actual.');
+                throw new \Exception('No se puede editar el documento en su estado actual.');
             }
 
+            // Manejar el archivo si se proporciona uno nuevo
             if ($request->hasFile('document')) {
+                // Eliminar documento anterior si existe
                 if ($documentRequest->document_path) {
                     Storage::disk('public')->delete($documentRequest->document_path);
                 }
+
                 $path = $this->handleFileStorage($request->file('document'));
                 $validated['document_path'] = $path;
+            }
+
+            // Si el documento estaba aprobado o en otro estado avanzado
+            // volver a estado pendiente de líder
+            if (in_array($documentRequest->status, [
+                DocumentRequest::STATUS_SIN_APROBAR,
+                DocumentRequest::STATUS_EN_ELABORACION,
+                DocumentRequest::STATUS_REVISION,
+                DocumentRequest::STATUS_PUBLICADO
+            ])) {
+                $validated['status'] = DocumentRequest::STATUS_PENDIENTE_LIDER;
+                $validated['leader_approval_date'] = null;
             }
 
             $documentRequest->update($validated);
@@ -415,18 +403,14 @@ class DocumentRequestController extends Controller
                 'new_status' => $documentRequest->status
             ]);
 
-            $redirectRoute = match ($documentRequest->status) {
-                DocumentRequest::STATUS_PUBLICADO => 'documents.published',
-                DocumentRequest::STATUS_PENDIENTE_LIDER => 'documents.pending-leader',
-                default => 'documents.requests.index'
-            };
-
             return redirect()
-                ->route($redirectRoute)
+                ->route('documents.requests.index')
                 ->with('success', self::MESSAGE_SUCCESS_UPDATE);
+
         } catch (\Exception $e) {
             DB::rollBack();
-
+            
+            // Eliminar el nuevo archivo si se subió y hubo error
             if (isset($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
@@ -444,12 +428,27 @@ class DocumentRequestController extends Controller
         }
     }
 
-    public function destroy(DocumentRequest $documentRequest, Request $request)
+    public function destroy(DocumentRequest $documentRequest)
     {
         try {
             DB::beginTransaction();
 
-            // Eliminar archivos asociados
+            // Verificar si el usuario tiene permisos para eliminar
+            if (!Auth::user()->hasRole(['admin']) && 
+                $documentRequest->user_id !== Auth::id()) {
+                throw new \Exception('No tiene permisos para eliminar esta solicitud.');
+            }
+
+            // Verificar el estado del documento
+            if (in_array($documentRequest->status, [
+                DocumentRequest::STATUS_EN_ELABORACION,
+                DocumentRequest::STATUS_REVISION,
+                DocumentRequest::STATUS_PUBLICADO
+            ])) {
+                throw new \Exception('No se puede eliminar el documento en su estado actual.');
+            }
+
+            // Eliminar archivos asociados si existen
             if ($documentRequest->document_path) {
                 Storage::disk('public')->delete($documentRequest->document_path);
             }
@@ -458,6 +457,7 @@ class DocumentRequestController extends Controller
                 Storage::disk('public')->delete($documentRequest->final_document_path);
             }
 
+            // Eliminar el registro
             $documentRequest->delete();
 
             DB::commit();
@@ -467,25 +467,10 @@ class DocumentRequestController extends Controller
                 'user_id' => Auth::id()
             ]);
 
-            // Verificar la URL de referencia
-            $previousUrl = url()->previous();
-
-            // Si viene de la vista index, mantener en esa vista
-            if (str_contains($previousUrl, route('documents.requests.index'))) {
-                return redirect()->route('documents.requests.index')
-                    ->with('success', self::MESSAGE_SUCCESS_DELETE);
-            }
-
-            // Si no, usar la lógica original del match
-            $redirectRoute = match ($documentRequest->status) {
-                DocumentRequest::STATUS_PUBLICADO => 'documents.published',
-                DocumentRequest::STATUS_PENDIENTE_LIDER => 'documents.pending-leader',
-                default => 'documents.requests.index'
-            };
-
             return redirect()
-                ->route($redirectRoute)
+                ->route('documents.requests.index')
                 ->with('success', self::MESSAGE_SUCCESS_DELETE);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -513,6 +498,7 @@ class DocumentRequestController extends Controller
                 $documentRequest->document_path,
                 $documentRequest->document_name . '.' . pathinfo($documentRequest->document_path, PATHINFO_EXTENSION)
             );
+
         } catch (\Exception $e) {
             Log::error('Error al descargar documento', [
                 'error' => $e->getMessage(),
@@ -535,12 +521,12 @@ class DocumentRequestController extends Controller
 
             $path = Storage::disk('public')->path($documentRequest->document_path);
             $contentType = mime_content_type($path);
-            $extension = pathinfo($documentRequest->document_path, PATHINFO_EXTENSION);
-
+            
             return response()->file($path, [
                 'Content-Type' => $contentType,
-                'Content-Disposition' => 'inline; filename="' . $documentRequest->document_name . '.' . $extension . '"'
+                'Content-Disposition' => 'inline; filename="' . $documentRequest->document_name . '"'
             ]);
+
         } catch (\Exception $e) {
             Log::error('Error al previsualizar documento', [
                 'error' => $e->getMessage(),
@@ -557,18 +543,17 @@ class DocumentRequestController extends Controller
     public function downloadFinalDocument(DocumentRequest $documentRequest)
     {
         try {
-            if (
-                !$documentRequest->final_document_path ||
-                !Storage::disk('public')->exists($documentRequest->final_document_path)
-            ) {
+            if (!$documentRequest->final_document_path || 
+                !Storage::disk('public')->exists($documentRequest->final_document_path)) {
                 throw new \Exception(self::MESSAGE_ERROR_FILE);
             }
 
             return Storage::disk('public')->download(
                 $documentRequest->final_document_path,
-                'final_' . $documentRequest->document_name . '.' .
-                    pathinfo($documentRequest->final_document_path, PATHINFO_EXTENSION)
+                'final_' . $documentRequest->document_name . '.' . 
+                pathinfo($documentRequest->final_document_path, PATHINFO_EXTENSION)
             );
+
         } catch (\Exception $e) {
             Log::error('Error al descargar documento final', [
                 'error' => $e->getMessage(),
@@ -585,21 +570,19 @@ class DocumentRequestController extends Controller
     public function previewFinalDocument(DocumentRequest $documentRequest)
     {
         try {
-            if (
-                !$documentRequest->final_document_path ||
-                !Storage::disk('public')->exists($documentRequest->final_document_path)
-            ) {
+            if (!$documentRequest->final_document_path || 
+                !Storage::disk('public')->exists($documentRequest->final_document_path)) {
                 throw new \Exception(self::MESSAGE_ERROR_FILE);
             }
 
             $path = Storage::disk('public')->path($documentRequest->final_document_path);
             $contentType = mime_content_type($path);
-            $extension = pathinfo($documentRequest->final_document_path, PATHINFO_EXTENSION);
-
+            
             return response()->file($path, [
                 'Content-Type' => $contentType,
-                'Content-Disposition' => 'inline; filename="final_' . $documentRequest->document_name . '.' . $extension . '"'
+                'Content-Disposition' => 'inline; filename="final_' . $documentRequest->document_name . '"'
             ]);
+
         } catch (\Exception $e) {
             Log::error('Error al previsualizar documento final', [
                 'error' => $e->getMessage(),
@@ -616,7 +599,7 @@ class DocumentRequestController extends Controller
     public function attachFinalDocument(Request $request, DocumentRequest $documentRequest)
     {
         $validated = $request->validate([
-            'final_document' => 'required|file|max:20480|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
+            'final_document' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
             'observations' => 'nullable|string',
         ]);
 
@@ -651,6 +634,7 @@ class DocumentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', self::MESSAGE_SUCCESS_FINAL_DOCUMENT);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -695,7 +679,7 @@ class DocumentRequestController extends Controller
             $this->validateStatusTransition($documentRequest->status, $validated['status']);
 
             $oldStatus = $documentRequest->status;
-
+            
             $documentRequest->update([
                 'status' => $validated['status'],
                 'observations' => $validated['observations'] ?? $documentRequest->observations
@@ -713,6 +697,7 @@ class DocumentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', 'Estado actualizado exitosamente.');
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -744,7 +729,7 @@ class DocumentRequestController extends Controller
 
             // Verificar que el usuario asignado tenga el rol correcto
             $assignedUser = User::whereId($validated['assigned_agent_id'])
-                ->whereHas('roles', function ($query) {
+                ->whereHas('roles', function($query) {
                     $query->whereIn('name', ['admin', 'agent']);
                 })
                 ->first();
@@ -754,10 +739,8 @@ class DocumentRequestController extends Controller
             }
 
             // Verificar si el agente pertenece al mismo proceso o es admin
-            if (
-                !$assignedUser->hasRole('admin') &&
-                $assignedUser->process_id !== $documentRequest->process_id
-            ) {
+            if (!$assignedUser->hasRole('admin') && 
+                $assignedUser->process_id !== $documentRequest->process_id) {
                 throw new \Exception('El agente debe pertenecer al mismo proceso del documento.');
             }
 
@@ -777,6 +760,7 @@ class DocumentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', self::MESSAGE_SUCCESS_ASSIGN);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -831,6 +815,7 @@ class DocumentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', self::MESSAGE_SUCCESS_REJECT);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -867,101 +852,24 @@ class DocumentRequestController extends Controller
                 throw new \Exception('No tiene permisos para aprobar documentos.');
             }
 
-            Log::info('Tipo de solicitud recibido:', [
-                'request_type' => $documentRequest->request_type,
-                'document_id' => $documentRequest->id
+            $documentRequest->update([
+                'status' => DocumentRequest::STATUS_PUBLICADO,
+                'observations' => $validated['observations'] ?? $documentRequest->observations,
+                'responsible_id' => Auth::id()
             ]);
-
-            // Manejar la aprobación según el tipo de solicitud
-            switch ($documentRequest->request_type) {
-                case 'create':
-                    $documentRequest->update([
-                        'status' => DocumentRequest::STATUS_PENDIENTE_LIDER,
-                        'observations' => $validated['observations'] ?? $documentRequest->observations,
-                        'responsible_id' => Auth::id()
-                    ]);
-                    $message = 'Documento enviado para aprobación del líder.';
-                    break;
-
-                case 'modify':
-                    if (!$documentRequest->reference_document_id) {
-                        throw new \Exception('No se encontró el documento de referencia.');
-                    }
-
-                    $originalDocument = DocumentRequest::findOrFail($documentRequest->reference_document_id);
-
-                    if ($originalDocument->status !== DocumentRequest::STATUS_PUBLICADO) {
-                        throw new \Exception('El documento original debe estar publicado para poder ser modificado.');
-                    }
-
-                    // Guardar la versión del documento original antes de obsoletizarlo
-                    $previousVersion = $originalDocument->getCurrentVersion();
-
-                    // Cambiar el estado del documento original a obsoleto
-                    $originalDocument->update([
-                        'status' => DocumentRequest::STATUS_OBSOLETO
-                    ]);
-
-                    // Publicar la nueva versión incrementando el número de versión
-                    $documentRequest->version = $previousVersion + 1;
-                    $documentRequest->update([
-                        'status' => DocumentRequest::STATUS_PUBLICADO,
-                        'observations' => $validated['observations'] ?? $documentRequest->observations,
-                        'responsible_id' => Auth::id()
-                    ]);
-
-                    Log::info('Documento modificado y versionado', [
-                        'document_id' => $documentRequest->id,
-                        'previous_version' => $previousVersion,
-                        'new_version' => $documentRequest->version,
-                        'original_document_id' => $originalDocument->id
-                    ]);
-
-                    $message = 'Documento modificado y publicado exitosamente como versión ' . $documentRequest->version;
-                    break;
-
-                case 'obsolete':
-                    if (!$documentRequest->reference_document_id) {
-                        throw new \Exception('No se encontró el documento de referencia.');
-                    }
-
-                    $originalDocument = DocumentRequest::findOrFail($documentRequest->reference_document_id);
-
-                    if ($originalDocument->status !== DocumentRequest::STATUS_PUBLICADO) {
-                        throw new \Exception('El documento debe estar publicado para poder ser obsoletizado.');
-                    }
-
-                    // Cambiar el estado del documento original a obsoleto
-                    $originalDocument->update([
-                        'status' => DocumentRequest::STATUS_OBSOLETO
-                    ]);
-
-                    // Marcar la solicitud como completada
-                    $documentRequest->update([
-                        'status' => DocumentRequest::STATUS_PENDIENTE_LIDER,
-                        'observations' => $validated['observations'] ?? $documentRequest->observations,
-                        'responsible_id' => Auth::id()
-                    ]);
-
-                    $message = 'Documento enviado para aprobación del líder de obsoletización.';
-                    break;
-
-                default:
-                    throw new \Exception('Tipo de solicitud no válido. Tipo recibido: ' . $documentRequest->request_type);
-            }
 
             DB::commit();
 
-            Log::info('Documento procesado exitosamente', [
+            Log::info('Documento aprobado exitosamente', [
                 'document_request_id' => $documentRequest->id,
                 'user_id' => Auth::id(),
-                'request_type' => $documentRequest->request_type,
                 'observations' => $validated['observations'] ?? null
             ]);
 
             return redirect()
                 ->back()
-                ->with('success', $message);
+                ->with('success', 'Documento aprobado exitosamente.');
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -969,7 +877,6 @@ class DocumentRequestController extends Controller
                 'error' => $e->getMessage(),
                 'document_request_id' => $documentRequest->id,
                 'user_id' => Auth::id(),
-                'request_type' => $documentRequest->request_type,
                 'trace' => $e->getTraceAsString()
             ]);
 
@@ -1015,6 +922,7 @@ class DocumentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', 'Documento devuelto a elaboración exitosamente.');
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -1031,42 +939,58 @@ class DocumentRequestController extends Controller
         }
     }
 
+    private function validateStatusTransition($currentStatus, $newStatus)
+    {
+        $allowedTransitions = [
+            DocumentRequest::STATUS_PENDIENTE_LIDER => [
+                DocumentRequest::STATUS_RECHAZADO_LIDER,
+                DocumentRequest::STATUS_SIN_APROBAR
+            ],
+            DocumentRequest::STATUS_RECHAZADO_LIDER => [
+                DocumentRequest::STATUS_PENDIENTE_LIDER
+            ],
+            DocumentRequest::STATUS_SIN_APROBAR => [
+                DocumentRequest::STATUS_EN_ELABORACION,
+                DocumentRequest::STATUS_RECHAZADO
+            ],
+            DocumentRequest::STATUS_EN_ELABORACION => [
+                DocumentRequest::STATUS_REVISION,
+                DocumentRequest::STATUS_RECHAZADO
+            ],
+            DocumentRequest::STATUS_REVISION => [
+                DocumentRequest::STATUS_PUBLICADO,
+                DocumentRequest::STATUS_EN_ELABORACION,
+                DocumentRequest::STATUS_RECHAZADO
+            ],
+            DocumentRequest::STATUS_RECHAZADO => [
+                DocumentRequest::STATUS_PENDIENTE_LIDER
+            ]
+        ];
+
+        if (!isset($allowedTransitions[$currentStatus]) || 
+            !in_array($newStatus, $allowedTransitions[$currentStatus])) {
+            throw new \Exception('La transición de estado no está permitida.');
+        }
+    }
+
     public function pendingLeaderApproval()
     {
         try {
-            // 1. Construir la consulta base con todas las relaciones necesarias
-            $query = DocumentRequest::with([
-                'user',
-                'documentType',
-                'responsible',
-                'assignedAgent',
-                'process'
-            ])->where('status', DocumentRequest::STATUS_PENDIENTE_LIDER);
-
-            // 2. Filtrar por procesos donde es líder si no es admin
-            if (!Auth::user()->hasPermissionTo('admin.agent')) {
-                $userProcessesAsLeader = Process::where('leader_id', Auth::id())->pluck('id');
-
-                if ($userProcessesAsLeader->isEmpty()) {
-                    return redirect()
-                        ->route('documents.requests.index')
-                        ->with('error', 'No tiene permisos de líder en ningún proceso.');
-                }
-
-                $query->whereIn('process_id', $userProcessesAsLeader);
+            // Obtener los procesos donde el usuario actual es líder
+            $userProcessesAsLeader = Process::where('leader_id', Auth::id())->pluck('id');
+            
+            if ($userProcessesAsLeader->isEmpty()) {
+                return redirect()
+                    ->route('documents.requests.index')
+                    ->with('error', 'No tiene permisos de líder en ningún proceso.');
             }
 
-            // 3. Obtener los documentos paginados
+            $query = DocumentRequest::with(['user', 'documentType', 'process'])
+                ->where('status', DocumentRequest::STATUS_PENDIENTE_LIDER)
+                ->whereIn('process_id', $userProcessesAsLeader);
+
             $documentRequests = $query->latest()->paginate(10);
 
-            // 4. Obtener usuarios activos con roles admin o agent
-            $users = User::where('active', true)
-                ->whereHas('roles', function ($query) {
-                    $query->whereIn('name', ['admin', 'agent']);
-                })
-                ->get();
-
-            // 5. Definir clases de estilo para los estados
             $statusClasses = [
                 DocumentRequest::STATUS_PENDIENTE_LIDER => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
                 DocumentRequest::STATUS_RECHAZADO_LIDER => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
@@ -1077,29 +1001,15 @@ class DocumentRequestController extends Controller
                 DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
             ];
 
-            // 6. Obtener las etiquetas de estado del modelo
-            $statusLabels = DocumentRequest::getStatusOptions();
-
-            // 7. Obtener los tipos de documento activos
-            $documentTypes = DocumentType::where('is_active', true)->get();
-
-            // 8. Obtener los procesos activos
-            $processes = Process::where('active', true)->get();
-
-            // 9. Retornar la vista con todas las variables necesarias
-            return view('documents.pending-leader', compact(
+            return view('document-requests.pending-leader', compact(
                 'documentRequests',
-                'users',
-                'statusClasses',
-                'statusLabels',
-                'documentTypes',
-                'processes'
+                'statusClasses'
             ));
+
         } catch (\Exception $e) {
             Log::error('Error en pendingLeaderApproval', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'process_id' => Auth::user()->process_id ?? null,
                 'trace' => $e->getTraceAsString()
             ]);
 
@@ -1128,26 +1038,11 @@ class DocumentRequestController extends Controller
 
             DB::beginTransaction();
 
-            // Determinar el estado según el tipo de solicitud
-            $newStatus = match ($documentRequest->request_type) {
-                'create' => DocumentRequest::STATUS_PUBLICADO,
-                'modify', 'obsolete' => DocumentRequest::STATUS_SIN_APROBAR,
-                default => throw new \Exception('Tipo de solicitud no válido')
-            };
-
-            $updateData = [
-                'status' => $newStatus,
+            $documentRequest->update([
+                'status' => DocumentRequest::STATUS_SIN_APROBAR,
                 'leader_observations' => $validated['observations'],
                 'leader_approval_date' => now()
-            ];
-
-            // Si es un nuevo documento y pasa a publicado, actualizar campos adicionales si es necesario
-            if ($documentRequest->request_type === 'create' && $newStatus === DocumentRequest::STATUS_PUBLICADO) {
-                $updateData['version'] = 1; // Primera versión para documentos nuevos
-                // Aquí puedes agregar otros campos necesarios para documentos publicados
-            }
-
-            $documentRequest->update($updateData);
+            ]);
 
             DB::commit();
 
@@ -1155,14 +1050,13 @@ class DocumentRequestController extends Controller
                 'document_request_id' => $documentRequest->id,
                 'user_id' => Auth::id(),
                 'process_id' => $documentRequest->process_id,
-                'request_type' => $documentRequest->request_type,
-                'new_status' => $newStatus,
                 'observations' => $validated['observations'] ?? null
             ]);
 
             return redirect()
                 ->back()
                 ->with('success', self::MESSAGE_SUCCESS_LEADER_APPROVE);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -1199,33 +1093,25 @@ class DocumentRequestController extends Controller
 
             DB::beginTransaction();
 
-            // Determinar el estado según el tipo de solicitud
-            $newStatus = match ($documentRequest->request_type) {
-                'create' => DocumentRequest::STATUS_REVISION,
-                'modify', 'obsolete' => DocumentRequest::STATUS_RECHAZADO_LIDER,
-                default => throw new \Exception('Tipo de solicitud no válido')
-            };
-
             $documentRequest->update([
-                'status' => $newStatus,
+                'status' => DocumentRequest::STATUS_RECHAZADO_LIDER,
                 'leader_observations' => $validated['observations'],
                 'leader_approval_date' => now()
             ]);
 
             DB::commit();
 
-            Log::info('Documento procesado por líder', [
+            Log::info('Documento rechazado por líder', [
                 'document_request_id' => $documentRequest->id,
                 'user_id' => Auth::id(),
                 'process_id' => $documentRequest->process_id,
-                'request_type' => $documentRequest->request_type,
-                'new_status' => $newStatus,
                 'observations' => $validated['observations']
             ]);
 
             return redirect()
                 ->back()
                 ->with('success', self::MESSAGE_SUCCESS_LEADER_REJECT);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -1243,6 +1129,21 @@ class DocumentRequestController extends Controller
         }
     }
 
+    /**
+     * Valida que el usuario actual sea el líder del proceso al que pertenece el documento
+     */
+    private function validateLeaderPermissions(DocumentRequest $documentRequest): bool
+    {
+        // Obtener el proceso del documento
+        $process = Process::find($documentRequest->process_id);
+        
+        if (!$process) {
+            return false;
+        }
+
+        // Verificar si el usuario actual es el líder del proceso
+        return $process->leader_id === Auth::id();
+    }
 
     public function inProgress()
     {
@@ -1258,7 +1159,7 @@ class DocumentRequestController extends Controller
             $documentRequests = $query->latest()->paginate(10);
 
             $users = User::where('active', true)
-                ->whereHas('roles', function ($query) {
+                ->whereHas('roles', function($query) {
                     $query->whereIn('name', ['admin', 'agent']);
                 })->get();
 
@@ -1280,6 +1181,7 @@ class DocumentRequestController extends Controller
                 'statusLabels',
                 'users'
             ));
+
         } catch (\Exception $e) {
             Log::error('Error en inProgress DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -1325,6 +1227,7 @@ class DocumentRequestController extends Controller
                 'statusLabels',
                 'users'
             ));
+
         } catch (\Exception $e) {
             Log::error('Error en inReview DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -1340,39 +1243,30 @@ class DocumentRequestController extends Controller
     public function published(Request $request)
     {
         try {
-            $query = DocumentRequest::with([
-                'user',
-                'documentType',
-                'responsible',
-                'assignedAgent',
-                'process'
-            ]);
+            $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent', 'process'])
+                ->where('status', DocumentRequest::STATUS_PUBLICADO);
 
-            // Primero verificamos si es admin.agent
-            if (Auth::user()->can('admin.agent')) {
-                // Si es admin.agent, mostramos todos los documentos publicados
-                $query->where('status', DocumentRequest::STATUS_PUBLICADO);
-            } else {
-                // Si no es admin.agent, filtramos por proceso y estado publicado
-                $query->where('status', DocumentRequest::STATUS_PUBLICADO)
-                    ->where('process_id', Auth::user()->process_id);
+            // Filtrar por proceso si el usuario no es admin
+            if (!Auth::user()->hasRole('admin')) {
+                $query->where('process_id', Auth::user()->process_id);
             }
 
-            // Resto del código de búsqueda y filtros...
+            // Aplicar búsqueda
             if ($request->has('search')) {
                 $searchTerm = $request->search;
-                $query->where(function ($q) use ($searchTerm) {
+                $query->where(function($q) use ($searchTerm) {
                     $q->where('document_name', 'like', "%{$searchTerm}%")
                         ->orWhere('description', 'like', "%{$searchTerm}%")
-                        ->orWhereHas('documentType', function ($q) use ($searchTerm) {
+                        ->orWhereHas('documentType', function($q) use ($searchTerm) {
                             $q->where('name', 'like', "%{$searchTerm}%");
                         })
-                        ->orWhereHas('user', function ($q) use ($searchTerm) {
+                        ->orWhereHas('user', function($q) use ($searchTerm) {
                             $q->where('name', 'like', "%{$searchTerm}%");
                         });
                 });
             }
 
+            // Filtrar por tipo de documento
             if ($request->has('document_type_id') && $request->document_type_id != 'all') {
                 $query->where('document_type_id', $request->document_type_id);
             }
@@ -1381,7 +1275,6 @@ class DocumentRequestController extends Controller
             $documentTypes = DocumentType::where('is_active', true)->get();
             $users = User::where('active', true)->get();
 
-            // Clases de estado actualizadas
             $statusClasses = [
                 DocumentRequest::STATUS_PENDIENTE_LIDER => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
                 DocumentRequest::STATUS_RECHAZADO_LIDER => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
@@ -1389,23 +1282,19 @@ class DocumentRequestController extends Controller
                 DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
                 DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
                 DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-                DocumentRequest::STATUS_OBSOLETO => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
             ];
 
             $statusLabels = DocumentRequest::getStatusOptions();
-
-            // Agregamos la variable para controlar permisos de edición/eliminación
-            $canManageDocuments = Auth::user()->can('admin.agent');
 
             return view('documents.published', compact(
                 'documentRequests',
                 'statusClasses',
                 'statusLabels',
                 'users',
-                'documentTypes',
-                'canManageDocuments'
+                'documentTypes'
             ));
+
         } catch (\Exception $e) {
             Log::error('Error en published DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -1431,16 +1320,16 @@ class DocumentRequestController extends Controller
             // Aplicar búsqueda general
             if ($request->filled('search')) {
                 $searchTerm = $request->search;
-                $query->where(function ($q) use ($searchTerm) {
+                $query->where(function($q) use ($searchTerm) {
                     $q->where('document_name', 'like', "%{$searchTerm}%")
                         ->orWhere('description', 'like', "%{$searchTerm}%")
-                        ->orWhereHas('documentType', function ($q) use ($searchTerm) {
+                        ->orWhereHas('documentType', function($q) use ($searchTerm) {
                             $q->where('name', 'like', "%{$searchTerm}%");
                         })
-                        ->orWhereHas('user', function ($q) use ($searchTerm) {
+                        ->orWhereHas('user', function($q) use ($searchTerm) {
                             $q->where('name', 'like', "%{$searchTerm}%");
                         })
-                        ->orWhereHas('process', function ($q) use ($searchTerm) {
+                        ->orWhereHas('process', function($q) use ($searchTerm) {
                             $q->where('name', 'like', "%{$searchTerm}%");
                         });
                 });
@@ -1497,6 +1386,7 @@ class DocumentRequestController extends Controller
                 'statusLabels',
                 'statusClasses'
             ));
+
         } catch (\Exception $e) {
             Log::error('Error en search DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -1573,10 +1463,8 @@ class DocumentRequestController extends Controller
 
             // Tiempos promedio de aprobación por estado
             $avgTimeByStatus = (clone $query)
-                ->select(
-                    'status',
-                    DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_hours')
-                )
+                ->select('status', 
+                    DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_hours'))
                 ->whereNotNull('updated_at')
                 ->groupBy('status')
                 ->get()
@@ -1599,15 +1487,15 @@ class DocumentRequestController extends Controller
 
             // Porcentaje de documentos por estado
             $totalDocuments = array_sum($statsByStatus);
-            $percentageByStatus = array_map(function ($total) use ($totalDocuments) {
+            $percentageByStatus = array_map(function($total) use ($totalDocuments) {
                 return $totalDocuments > 0 ? round(($total / $totalDocuments) * 100, 2) : 0;
             }, $statsByStatus);
 
             $statusLabels = DocumentRequest::getStatusOptions();
 
             // Obtener lista de procesos para filtros si es admin
-            $processes = Auth::user()->hasRole('admin')
-                ? Process::where('active', true)->get()
+            $processes = Auth::user()->hasRole('admin') 
+                ? Process::where('active', true)->get() 
                 : Process::where('id', Auth::user()->process_id)->get();
 
             return view('documents.statistics', compact(
@@ -1621,6 +1509,7 @@ class DocumentRequestController extends Controller
                 'statusLabels',
                 'processes'
             ));
+
         } catch (\Exception $e) {
             Log::error('Error en statistics DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -1645,7 +1534,7 @@ class DocumentRequestController extends Controller
         try {
             // Generar nombre único para el archivo
             $fileName = Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
-
+            
             // Verificar y crear el directorio si no existe
             $path = $folder . '/' . date('Y/m');
             if (!Storage::disk('public')->exists($path)) {
@@ -1660,6 +1549,7 @@ class DocumentRequestController extends Controller
             }
 
             return $filePath;
+
         } catch (\Exception $e) {
             Log::error('Error en handleFileStorage', [
                 'error' => $e->getMessage(),
@@ -1711,7 +1601,7 @@ class DocumentRequestController extends Controller
         try {
             // Obtener el proceso del documento
             $process = $documentRequest->process;
-
+            
             if (!$process) {
                 Log::warning('Proceso no encontrado para el documento', [
                     'document_request_id' => $documentRequest->id,
@@ -1731,6 +1621,7 @@ class DocumentRequestController extends Controller
             }
 
             return true;
+
         } catch (\Exception $e) {
             Log::error('Error en validateLeaderPermissions', [
                 'error' => $e->getMessage(),
@@ -1778,17 +1669,15 @@ class DocumentRequestController extends Controller
         ];
 
         // Verificar si la transición está permitida
-        if (
-            !isset($allowedTransitions[$currentStatus]) ||
-            !in_array($newStatus, $allowedTransitions[$currentStatus])
-        ) {
-
+        if (!isset($allowedTransitions[$currentStatus]) || 
+            !in_array($newStatus, $allowedTransitions[$currentStatus])) {
+                
             Log::warning('Intento de transición de estado no permitida', [
                 'current_status' => $currentStatus,
                 'new_status' => $newStatus,
                 'user_id' => Auth::id()
             ]);
-
+            
             throw new \Exception('La transición de estado solicitada no está permitida.');
         }
     }
@@ -1803,7 +1692,7 @@ class DocumentRequestController extends Controller
     {
         try {
             $process = Process::find($processId);
-
+            
             if (!$process) {
                 Log::warning('Proceso no encontrado', [
                     'process_id' => $processId
@@ -1819,6 +1708,7 @@ class DocumentRequestController extends Controller
             }
 
             return true;
+
         } catch (\Exception $e) {
             Log::error('Error al verificar líder del proceso', [
                 'error' => $e->getMessage(),
@@ -1829,78 +1719,1115 @@ class DocumentRequestController extends Controller
         }
     }
 
-    public function masterdocument(Request $request)
+}
+
+
+/**
+    *controller viejo
+*/
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DocumentRequest;
+use App\Models\DocumentType;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use App\Models\Process;
+
+
+class DocumentRequestController extends Controller
+{
+    private const MESSAGE_SUCCESS_CREATE = 'Solicitud de documento creada exitosamente.';
+    private const MESSAGE_SUCCESS_UPDATE = 'Solicitud actualizada exitosamente.';
+    private const MESSAGE_SUCCESS_DELETE = 'Solicitud eliminada exitosamente.';
+    private const MESSAGE_SUCCESS_ASSIGN = 'Responsable asignado y solicitud aprobada exitosamente.';
+    private const MESSAGE_SUCCESS_REJECT = 'Solicitud rechazada exitosamente.';
+    private const MESSAGE_ERROR_FILE = 'El archivo no se encuentra disponible.';
+    private const MESSAGE_ERROR_GENERIC = 'Ha ocurrido un error. Por favor, intente nuevamente.';
+    private const MESSAGE_SUCCESS_FINAL_DOCUMENT = 'Documento final adjuntado exitosamente.';
+
+    public function index(Request $request)
     {
         try {
-            $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent', 'process'])
-                ->where('status', DocumentRequest::STATUS_OBSOLETO);
+            $query = DocumentRequest::with(['user', 'documentType', 'responsible']);
 
-            // Filtrar por proceso si el usuario no es admin
-            if (!Auth::user()->hasRole('admin')) {
-                $query->where('process_id', Auth::user()->process_id);
+            // Filter out published documents
+            $query->where('status', '!=', DocumentRequest::STATUS_PUBLICADO);
+
+            // Filter for regular users to see only their requests
+            if (Auth::user()->hasRole('user')) {
+                $query->where('user_id', Auth::id());
             }
 
-            // Aplicar búsqueda
             if ($request->has('search')) {
                 $searchTerm = $request->search;
-                $query->where(function ($q) use ($searchTerm) {
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('document_name', 'like', "%{$searchTerm}%")
+                    ->orWhere('description', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('documentType', function($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    })
+                    ->orWhereHas('user', function($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    });
+                });
+            }
+
+            if ($request->has('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            $documentRequests = $query->latest()->paginate(10);
+            $users = User::where('active', true)
+            ->whereHas('roles', function($query) {
+                $query->whereIn('name', ['admin', 'agent']);
+            })
+            ->get();
+
+            $statusClasses = [
+                DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+                DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+            ];
+
+            $statusLabels = DocumentRequest::getStatusOptions();
+
+            return view('document-requests.index', compact(
+                'documentRequests',
+                'statusClasses',
+                'statusLabels',
+                'users'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error en index DocumentRequest', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function inProgress()
+    {
+        try {
+            $documentRequests = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent'])
+                ->where('status', DocumentRequest::STATUS_EN_ELABORACION)
+                ->latest()
+                ->paginate(10);
+
+            $users = User::where('active', true)->get();
+
+            $statusClasses = [
+                DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+                DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+            ];
+
+            $statusLabels = DocumentRequest::getStatusOptions();
+
+            return view('documents.in-progress', compact(
+                'documentRequests',
+                'statusClasses',
+                'statusLabels',
+                'users'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error en inProgress DocumentRequest', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    // En el controlador:
+    public function create()
+    {
+        try {
+            $documentTypes = DocumentType::where('is_active', true)->get();
+            $users = User::where('active', true)->get();
+            
+            $publishedDocuments = DocumentRequest::with(['documentType'])
+                ->where('status', DocumentRequest::STATUS_PUBLICADO)
+                ->where(function($query) {
+                    if (Auth::user()->hasRole('user')) {
+                        $query->whereHas('user', function($q) {
+                            $q->where('process_id', Auth::user()->process_id);
+                        });
+                    }
+                })
+                ->get();
+            
+            return view('document-requests.create', compact('documentTypes', 'users', 'publishedDocuments'));
+        } catch (\Exception $e) {
+            Log::error('Error en create DocumentRequest', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        // 1. Validación mejorada
+        $validated = $request->validate([
+            'request_type' => 'required|in:create,modify',
+            'document' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
+            'description' => 'required|string',
+            'document_type_id' => $request->request_type === 'create' ? 'required|exists:document_types,id' : 'nullable',
+            'document_name' => $request->request_type === 'create' ? 'required|string|max:255' : 'nullable',
+            'existing_document_id' => $request->request_type === 'modify' ? 'required|exists:document_requests,id' : 'nullable',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // 2. Verificar y procesar el archivo
+            if (!$request->hasFile('document')) {
+                throw new \Exception('No se ha proporcionado ningún archivo');
+            }
+
+            $path = $this->handleFileStorage($request->file('document'));
+
+            // 3. Preparar datos base
+            $documentData = [
+                'request_type' => $validated['request_type'],
+                'user_id' => Auth::id(),
+                'document_path' => $path,
+                'description' => $validated['description'],
+                'status' => DocumentRequest::STATUS_SIN_APROBAR,
+            ];
+
+            // 4. Procesar según el tipo de solicitud
+            if ($validated['request_type'] === 'modify') {
+                $existingDocument = DocumentRequest::findOrFail($validated['existing_document_id']);
+                
+                // Verificar que el documento existe y está publicado
+                if (!$existingDocument || $existingDocument->status !== DocumentRequest::STATUS_PUBLICADO) {
+                    throw new \Exception('El documento seleccionado no está disponible para modificación');
+                }
+
+                $documentData = array_merge($documentData, [
+                    'document_type_id' => $existingDocument->document_type_id,
+                    'document_name' => $existingDocument->document_name,
+                    'reference_document_id' => $existingDocument->id,
+                    'process_id' => Auth::user()->process_id // Agregar process_id si es necesario
+                ]);
+            } else {
+                $documentData = array_merge($documentData, [
+                    'document_type_id' => $validated['document_type_id'],
+                    'document_name' => $validated['document_name'],
+                    'process_id' => Auth::user()->process_id // Agregar process_id si es necesario
+                ]);
+            }
+
+            // 5. Crear la solicitud
+            $documentRequest = DocumentRequest::create($documentData);
+
+            // 6. Confirmar la transacción
+            DB::commit();
+
+            // 7. Registrar el éxito en los logs
+            Log::info('Solicitud de documento creada exitosamente', [
+                'document_request_id' => $documentRequest->id,
+                'type' => $validated['request_type'],
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()
+                ->route('documents.requests.index')
+                ->with('success', self::MESSAGE_SUCCESS_CREATE);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Si se subió un archivo, eliminarlo
+            if (isset($path) && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            Log::error('Error al crear solicitud de documento', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function show(DocumentRequest $documentRequest)
+    {
+        try {
+            $documentRequest->load(['user', 'documentType', 'responsible']);
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'id' => $documentRequest->id,
+                        'request_type' => $documentRequest->request_type,
+                        'document_name' => $documentRequest->document_name,
+                        'status' => $documentRequest->status,
+                        'document_type' => [
+                            'id' => $documentRequest->documentType->id,
+                            'name' => $documentRequest->documentType->name
+                        ],
+                        'origin' => $documentRequest->origin,
+                        'destination' => $documentRequest->destination,
+                        'description' => $documentRequest->description,
+                        'observations' => $documentRequest->observations,
+                        'user' => [
+                            'id' => $documentRequest->user->id,
+                            'name' => $documentRequest->user->name
+                        ],
+                        'responsible' => [
+                            'id' => $documentRequest->responsible->id,
+                            'name' => $documentRequest->responsible->name
+                        ],
+                        'created_at' => $documentRequest->created_at->format('d/m/Y H:i'),
+                        'updated_at' => $documentRequest->updated_at->format('d/m/Y H:i'),
+                        'document_path' => $documentRequest->document_path,
+                        'final_document_path' => $documentRequest->final_document_path,
+                    ]
+                ]);
+            }
+
+            return view('document-requests.show', compact('documentRequest'));
+
+        } catch (\Exception $e) {
+            Log::error('Error en show DocumentRequest', [
+                'error' => $e->getMessage(),
+                'documentRequest' => $documentRequest->id
+            ]);
+
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al cargar los detalles de la solicitud'
+                ], 500);
+            }
+
+            return redirect()
+                ->back()
+                ->with('error', 'Error al cargar los detalles de la solicitud');
+        }
+    }
+
+    public function edit(DocumentRequest $documentRequest) 
+    {
+        try {
+            $documentTypes = DocumentType::where('is_active', true)->get();
+            $users = User::where('active', true)->get(); 
+            return view('document-requests.edit', compact('documentRequest', 'documentTypes', 'users'));
+        } catch (\Exception $e) {
+            Log::error('Error en edit DocumentRequest', [
+                'error' => $e->getMessage(),
+                'documentRequest' => $documentRequest->id
+            ]);
+            return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+     
+     public function update(Request $request, DocumentRequest $documentRequest) 
+     {
+        $validated = $request->validate([
+            'request_type' => 'required|in:create,modify',
+            'document_type_id' => 'required|exists:document_types,id',
+            'document_name' => 'required|string|max:255', 
+            'description' => 'required|string',
+            'document' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx'
+        ]);
+     
+        try {
+            DB::beginTransaction();
+     
+            if ($request->hasFile('document')) {
+                if ($documentRequest->document_path) {
+                    Storage::disk('public')->delete($documentRequest->document_path);
+                }
+     
+                $file = $request->file('document');
+                $fileName = Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('documents', $fileName, 'public');
+                $validated['document_path'] = $path;
+            }
+     
+            $documentRequest->update($validated);
+     
+            DB::commit();
+            return redirect()->route('documents.requests.index')->with('success', self::MESSAGE_SUCCESS_UPDATE);
+     
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            if (isset($path) && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+     
+            Log::error('Error al actualizar DocumentRequest', [
+                'error' => $e->getMessage(),
+                'documentRequest' => $documentRequest->id
+            ]);
+     
+            return redirect()->back()->withInput()->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+     }
+
+    public function destroy(DocumentRequest $documentRequest)
+    {
+        try {
+            DB::beginTransaction();
+
+            if ($documentRequest->document_path) {
+                Storage::disk('public')->delete($documentRequest->document_path);
+            }
+
+            if ($documentRequest->final_document_path) {
+                Storage::disk('public')->delete($documentRequest->final_document_path);
+            }
+
+            $documentRequest->delete();
+
+            DB::commit();
+
+            return redirect()
+                ->route('documents.requests.index')
+                ->with('success', self::MESSAGE_SUCCESS_DELETE);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al eliminar DocumentRequest', [
+                'error' => $e->getMessage(),
+                'documentRequest' => $documentRequest->id
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function downloadDocument(DocumentRequest $documentRequest)
+    {
+        try {
+            if (!$documentRequest->document_path || !Storage::disk('public')->exists($documentRequest->document_path)) {
+                throw new \Exception(self::MESSAGE_ERROR_FILE);
+            }
+
+            return Storage::disk('public')->download(
+                $documentRequest->document_path,
+                $documentRequest->document_name . '.' . pathinfo($documentRequest->document_path, PATHINFO_EXTENSION)
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Error al descargar documento', [
+                'error' => $e->getMessage(),
+                'documentRequest' => $documentRequest->id
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Error al descargar el documento: ' . $e->getMessage());
+        }
+    }
+
+    public function updateStatus(Request $request, DocumentRequest $documentRequest)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:sin_aprobar,en_elaboracion,revision,publicado,rechazado',
+            'observations' => 'nullable|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $documentRequest->update([
+                'status' => $validated['status'],
+                'observations' => $validated['observations']
+            ]);
+
+            DB::commit();
+
+            Log::info('Estado de documento actualizado exitosamente', [
+                'document_request_id' => $documentRequest->id,
+                'old_status' => $documentRequest->getOriginal('status'),
+                'new_status' => $validated['status'],
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Estado actualizado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al actualizar estado', [
+                'error' => $e->getMessage(),
+                'document_request_id' => $documentRequest->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function previewDocument(DocumentRequest $documentRequest)
+    {
+        try {
+            if (!$documentRequest->document_path || !Storage::disk('public')->exists($documentRequest->document_path)) {
+                throw new \Exception(self::MESSAGE_ERROR_FILE);
+            }
+
+            $path = Storage::disk('public')->path($documentRequest->document_path);
+            $contentType = mime_content_type($path);
+            
+            return response()->file($path, [
+                'Content-Type' => $contentType,
+                'Content-Disposition' => 'inline; filename="' . $documentRequest->document_name . '"'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al previsualizar documento', [
+                'error' => $e->getMessage(),
+                'documentRequest' => $documentRequest->id
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Error al previsualizar el documento: ' . $e->getMessage());
+        }
+    }
+
+    public function reject(Request $request, DocumentRequest $documentRequest)
+    {
+        if (!$documentRequest->canBeRejected()) {
+            return redirect()
+                ->back()
+                ->with('error', 'Esta solicitud no puede ser rechazada en su estado actual.');
+        }
+
+        $validated = $request->validate([
+            'observations' => 'required|string|max:1000',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            Log::info('Intentando rechazar solicitud', [
+                'request_id' => $documentRequest->id,
+                'observations' => $validated['observations']
+            ]);
+
+            $documentRequest->status = DocumentRequest::STATUS_RECHAZADO;
+            $documentRequest->observations = $validated['observations'];
+            $documentRequest->save();
+
+            DB::commit();
+
+            Log::info('Solicitud rechazada exitosamente', [
+                'request_id' => $documentRequest->id,
+                'new_status' => $documentRequest->status,
+                'observations' => $documentRequest->observations
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', self::MESSAGE_SUCCESS_REJECT);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al rechazar solicitud', [
+                'error' => $e->getMessage(),
+                'request_id' => $documentRequest->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function assign(Request $request, DocumentRequest $documentRequest)
+    {
+        $validated = $request->validate([
+            'assigned_agent_id' => 'required|exists:users,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            if (!$documentRequest->canBeAssigned()) {
+                throw new \Exception('Esta solicitud no puede ser asignada en su estado actual.');
+            }
+
+            // Verify the assigned user has the correct role
+            $assignedUser = User::whereId($validated['assigned_agent_id'])
+                ->whereHas('roles', function($query) {
+                    $query->whereIn('name', ['admin', 'agent']);
+                })
+                ->first();
+
+            if (!$assignedUser) {
+                throw new \Exception('El usuario asignado debe tener rol de administrador o agente.');
+            }
+
+            $documentRequest->update([
+                'assigned_agent_id' => $validated['assigned_agent_id'],
+                'status' => DocumentRequest::STATUS_EN_ELABORACION,
+            ]);
+
+            DB::commit();
+
+            Log::info('Solicitud asignada exitosamente', [
+                'request_id' => $documentRequest->id,
+                'assigned_agent_id' => $validated['assigned_agent_id']
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Agente asignado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al asignar agente', [
+                'error' => $e->getMessage(),
+                'request_id' => $documentRequest->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', $e->getMessage() ?: 'Error al asignar el agente.');
+        }
+    }
+
+    public function attachFinalDocument(Request $request, DocumentRequest $documentRequest)
+    {
+        $validated = $request->validate([
+            'final_document' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
+            'observations' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            if ($documentRequest->status !== DocumentRequest::STATUS_EN_ELABORACION) {
+                throw new \Exception('Solo se puede adjuntar el documento final cuando está en elaboración.');
+            }
+
+            if ($documentRequest->final_document_path) {
+                Storage::disk('public')->delete($documentRequest->final_document_path);
+            }
+
+            if ($request->hasFile('final_document')) {
+                $file = $request->file('final_document');
+                $fileName = 'final_' . Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('documents/final', $fileName, 'public');
+
+                $documentRequest->update([
+                    'final_document_path' => $path,
+                    'status' => DocumentRequest::STATUS_REVISION,
+                    'observations' => $validated['observations']
+                ]);
+            }
+
+            DB::commit();
+
+            Log::info('Documento final adjuntado exitosamente', [
+                'document_request_id' => $documentRequest->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', self::MESSAGE_SUCCESS_FINAL_DOCUMENT);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            if (isset($path) && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            Log::error('Error al adjuntar documento final', [
+                'error' => $e->getMessage(),
+                'document_request_id' => $documentRequest->id
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function downloadFinalDocument(DocumentRequest $documentRequest)
+   {
+       try {
+           if (!$documentRequest->final_document_path || 
+               !Storage::disk('public')->exists($documentRequest->final_document_path)) {
+               throw new \Exception(self::MESSAGE_ERROR_FILE);
+           }
+
+           return Storage::disk('public')->download(
+               $documentRequest->final_document_path,
+               'final_' . $documentRequest->document_name . '.' . 
+               pathinfo($documentRequest->final_document_path, PATHINFO_EXTENSION)
+           );
+
+       } catch (\Exception $e) {
+           Log::error('Error al descargar documento final', [
+               'error' => $e->getMessage(),
+               'documentRequest' => $documentRequest->id
+           ]);
+
+           return redirect()
+               ->back()
+               ->with('error', 'Error al descargar el documento: ' . $e->getMessage());
+       }
+   }
+
+   public function previewFinalDocument(DocumentRequest $documentRequest)
+   {
+       try {
+           if (!$documentRequest->final_document_path || 
+               !Storage::disk('public')->exists($documentRequest->final_document_path)) {
+               throw new \Exception(self::MESSAGE_ERROR_FILE);
+           }
+
+           $path = Storage::disk('public')->path($documentRequest->final_document_path);
+           $contentType = mime_content_type($path);
+           
+           return response()->file($path, [
+               'Content-Type' => $contentType,
+               'Content-Disposition' => 'inline; filename="final_' . $documentRequest->document_name . '"'
+           ]);
+
+       } catch (\Exception $e) {
+           Log::error('Error al previsualizar documento final', [
+               'error' => $e->getMessage(),
+               'documentRequest' => $documentRequest->id
+           ]);
+
+           return redirect()
+               ->back()
+               ->with('error', 'Error al previsualizar el documento: ' . $e->getMessage());
+       }
+   }
+
+   private function handleFileStorage($file): string 
+    {
+        try {
+            // Log inicial con información del archivo
+            Log::info('Iniciando almacenamiento de archivo', [
+                'original_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'user_id' => Auth::id()
+            ]);
+
+            // Validar el archivo antes de procesar
+            if (!$file->isValid()) {
+                throw new \Exception('El archivo no es válido o está corrupto');
+            }
+
+            // Generar nombre único para el archivo
+            $fileName = Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+            
+            // Crear estructura de directorios por año/mes
+            $path = 'documents/' . date('Y/m');
+
+            // Verificar y crear el directorio si no existe
+            if (!Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->makeDirectory($path);
+                Log::info('Directorio creado', [
+                    'path' => $path,
+                    'user_id' => Auth::id()
+                ]);
+            }
+
+            // Almacenar el archivo
+            $filePath = $file->storeAs($path, $fileName, 'public');
+
+            if (!$filePath) {
+                throw new \Exception('Error al guardar el archivo');
+            }
+
+            // Verificar que el archivo se haya guardado correctamente
+            if (!Storage::disk('public')->exists($filePath)) {
+                throw new \Exception('El archivo no se guardó correctamente');
+            }
+
+            Log::info('Archivo almacenado exitosamente', [
+                'path' => $filePath,
+                'file_name' => $fileName,
+                'user_id' => Auth::id(),
+                'size' => $file->getSize()
+            ]);
+
+            return $filePath;
+
+        } catch (\Exception $e) {
+            Log::error('Error en handleFileStorage', [
+                'error' => $e->getMessage(),
+                'file_name' => $file->getClientOriginalName(),
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw $e;
+        }
+    }
+
+   private function deleteExistingFile($path): void
+   {
+       if ($path && Storage::disk('public')->exists($path)) {
+           Storage::disk('public')->delete($path);
+       }
+   }
+
+   public function inReview()
+   {
+       try {
+           $documentRequests = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent'])
+               ->where('status', DocumentRequest::STATUS_REVISION)
+               ->latest()
+               ->paginate(10);
+
+           $users = User::where('active', true)->get();
+
+           $statusClasses = [
+               DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+               DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+               DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+               DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+               DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+           ];
+
+           $statusLabels = DocumentRequest::getStatusOptions();
+
+           return view('documents.in-review', compact(
+               'documentRequests',
+               'statusClasses',
+               'statusLabels',
+               'users'
+           ));
+       } catch (\Exception $e) {
+           Log::error('Error en inReview DocumentRequest', [
+               'error' => $e->getMessage()
+           ]);
+
+           return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+       }
+   }
+
+   public function published(Request $request)
+    {
+        try {
+            $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent'])
+                ->where('status', DocumentRequest::STATUS_PUBLICADO);
+
+            // Filtrar por el proceso del usuario 
+            if (Auth::user()->hasRole('user')) {
+                $userProcessId = Auth::user()->process_id;
+                $query->whereHas('user', function($q) use ($userProcessId) {
+                    $q->where('process_id', $userProcessId);
+                });
+            }
+
+            if ($request->has('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
                     $q->where('document_name', 'like', "%{$searchTerm}%")
                         ->orWhere('description', 'like', "%{$searchTerm}%")
-                        ->orWhereHas('documentType', function ($q) use ($searchTerm) {
+                        ->orWhereHas('documentType', function($q) use ($searchTerm) {
                             $q->where('name', 'like', "%{$searchTerm}%");
                         })
-                        ->orWhereHas('user', function ($q) use ($searchTerm) {
+                        ->orWhereHas('user', function($q) use ($searchTerm) {
                             $q->where('name', 'like', "%{$searchTerm}%");
                         });
                 });
             }
 
-            // Filtrar por tipo de documento
             if ($request->has('document_type_id') && $request->document_type_id != 'all') {
                 $query->where('document_type_id', $request->document_type_id);
             }
 
-            // Filtrar por rango de fechas
-            if ($request->filled('date_from')) {
-                $query->whereDate('created_at', '>=', $request->date_from);
-            }
-            if ($request->filled('date_to')) {
-                $query->whereDate('created_at', '<=', $request->date_to);
-            }
-
             $documentRequests = $query->latest()->paginate(10);
-            $documentTypes = DocumentType::where('is_active', true)->get();
             $users = User::where('active', true)->get();
+            $documentTypes = DocumentType::where('is_active', true)->get();
 
             $statusClasses = [
-                DocumentRequest::STATUS_PENDIENTE_LIDER => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-                DocumentRequest::STATUS_RECHAZADO_LIDER => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
                 DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
                 DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
                 DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
                 DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-                DocumentRequest::STATUS_OBSOLETO => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
             ];
 
             $statusLabels = DocumentRequest::getStatusOptions();
 
-            return view('documents.masterdocument', compact(
-                'documentRequests',
+            return view('documents.published', compact(
+                'documentRequests', 
                 'statusClasses',
                 'statusLabels',
                 'users',
                 'documentTypes'
             ));
         } catch (\Exception $e) {
-            Log::error('Error en masterdocument DocumentRequest', [
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-                'process_id' => Auth::user()->process_id ?? null,
-                'trace' => $e->getTraceAsString()
+            Log::error('Error en published DocumentRequest', [
+                'error' => $e->getMessage()
             ]);
 
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
+
+   public function approve(Request $request, DocumentRequest $documentRequest)
+   {
+       if ($documentRequest->status !== DocumentRequest::STATUS_REVISION) {
+           return redirect()
+               ->back()
+               ->with('error', 'Solo se pueden aprobar documentos en estado de revisión.');
+       }
+
+       $validated = $request->validate([
+           'observations' => 'nullable|string|max:1000',
+       ]);
+
+       try {
+           DB::beginTransaction();
+
+           $documentRequest->update([
+               'status' => DocumentRequest::STATUS_PUBLICADO,
+               'observations' => $validated['observations'] ?? $documentRequest->observations,
+           ]);
+
+           DB::commit();
+
+           Log::info('Documento aprobado exitosamente', [
+               'document_request_id' => $documentRequest->id,
+               'user_id' => Auth::id(),
+           ]);
+
+           return redirect()
+               ->back()
+               ->with('success', 'Documento aprobado exitosamente.');
+
+       } catch (\Exception $e) {
+           DB::rollBack();
+
+           Log::error('Error al aprobar documento', [
+               'error' => $e->getMessage(),
+               'document_request_id' => $documentRequest->id
+           ]);
+
+           return redirect()
+               ->back()
+               ->with('error', self::MESSAGE_ERROR_GENERIC);
+       }
+   }
+   public function returnToProgress(Request $request, DocumentRequest $documentRequest)
+   {
+       if ($documentRequest->status !== DocumentRequest::STATUS_REVISION) {
+           return redirect()
+               ->back()
+               ->with('error', 'Solo se pueden devolver documentos en estado de revisión.');
+       }
+
+       $validated = $request->validate([
+           'observations' => 'required|string|max:1000',
+       ]);
+
+       try {
+           DB::beginTransaction();
+
+           $documentRequest->update([
+               'status' => DocumentRequest::STATUS_EN_ELABORACION,
+               'observations' => $validated['observations'],
+           ]);
+
+           DB::commit();
+
+           Log::info('Documento devuelto a elaboración exitosamente', [
+               'document_request_id' => $documentRequest->id,
+               'user_id' => Auth::id(),
+           ]);
+
+           return redirect()
+               ->back()
+               ->with('success', 'Documento devuelto a elaboración exitosamente.');
+
+       } catch (\Exception $e) {
+           DB::rollBack();
+
+           Log::error('Error al devolver documento a elaboración', [
+               'error' => $e->getMessage(),
+               'document_request_id' => $documentRequest->id
+           ]);
+
+           return redirect()
+               ->back()
+               ->with('error', self::MESSAGE_ERROR_GENERIC);
+       }
+   }
+
+   public function search(Request $request)
+   {
+       try {
+           $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent']);
+
+           // Aplicar filtros de búsqueda
+           if ($request->filled('search')) {
+               $searchTerm = $request->search;
+               $query->where(function($q) use ($searchTerm) {
+                   $q->where('document_name', 'like', "%{$searchTerm}%")
+                     ->orWhere('description', 'like', "%{$searchTerm}%")
+                     ->orWhereHas('documentType', function($q) use ($searchTerm) {
+                         $q->where('name', 'like', "%{$searchTerm}%");
+                     })
+                     ->orWhereHas('user', function($q) use ($searchTerm) {
+                         $q->where('name', 'like', "%{$searchTerm}%");
+                     });
+               });
+           }
+
+           // Filtrar por estado si se especifica
+           if ($request->has('status') && $request->status != 'all') {
+               $query->where('status', $request->status);
+           }
+
+           // Filtrar por tipo de documento si se especifica
+           if ($request->has('document_type_id') && $request->document_type_id != 'all') {
+               $query->where('document_type_id', $request->document_type_id);
+           }
+
+           // Filtrar por rango de fechas si se especifica
+           if ($request->has('date_from')) {
+               $query->whereDate('created_at', '>=', $request->date_from);
+           }
+           if ($request->has('date_to')) {
+               $query->whereDate('created_at', '<=', $request->date_to);
+           }
+
+           $documentRequests = $query->latest()->paginate(10);
+
+           if ($request->ajax()) {
+               return response()->json([
+                   'success' => true,
+                   'html' => view('documents.partials.document-list', compact('documentRequests'))->render(),
+                   'pagination' => view('documents.partials.pagination', compact('documentRequests'))->render(),
+               ]);
+           }
+
+           $users = User::where('active', true)->get();
+           $documentTypes = DocumentType::where('is_active', true)->get();
+           $statusLabels = DocumentRequest::getStatusOptions();
+
+           $statusClasses = [
+               DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+               DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+               DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+               DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+               DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+           ];
+
+           return view('documents.search', compact(
+               'documentRequests',
+               'users',
+               'documentTypes',
+               'statusLabels',
+               'statusClasses'
+           ));
+
+       } catch (\Exception $e) {
+           Log::error('Error en search DocumentRequest', [
+               'error' => $e->getMessage()
+           ]);
+
+           if ($request->ajax()) {
+               return response()->json([
+                   'success' => false,
+                   'message' => self::MESSAGE_ERROR_GENERIC
+               ], 500);
+           }
+
+           return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+       }
+   }
+
+   public function statistics()
+   {
+       try {
+           // Estadísticas por estado
+           $statsByStatus = DocumentRequest::select('status', DB::raw('count(*) as total'))
+               ->groupBy('status')
+               ->get()
+               ->pluck('total', 'status')
+               ->toArray();
+
+           // Estadísticas por tipo de documento
+           $statsByType = DocumentRequest::select('document_type_id', DB::raw('count(*) as total'))
+               ->groupBy('document_type_id')
+               ->with('documentType')
+               ->get()
+               ->mapWithKeys(function ($item) {
+                   return [$item->documentType->name => $item->total];
+               })
+               ->toArray();
+
+           // Documentos por mes (últimos 12 meses)
+           $documentsByMonth = DocumentRequest::select(
+                   DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                   DB::raw('count(*) as total')
+               )
+               ->whereYear('created_at', '>=', now()->subYear()->year)
+               ->groupBy('month')
+               ->orderBy('month')
+               ->get()
+               ->mapWithKeys(function ($item) {
+                   return [$item->month => $item->total];
+               })
+               ->toArray();
+
+           $statusLabels = DocumentRequest::getStatusOptions();
+
+           return view('documents.statistics', compact(
+               'statsByStatus',
+               'statsByType',
+               'documentsByMonth',
+               'statusLabels'
+           ));
+
+       } catch (\Exception $e) {
+           Log::error('Error en statistics DocumentRequest', [
+               'error' => $e->getMessage()
+           ]);
+
+           return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+       }
+   }
+   
 }
+
+
+

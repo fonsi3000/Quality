@@ -142,77 +142,131 @@
        </div>
    </div>
 
-   <!-- Scripts -->
-   @stack('scripts')
-   <script>
-       // Inicialización de componentes HS
-       document.addEventListener('DOMContentLoaded', function () {
-           // Inicializar HSOverlay
-           if (typeof HSOverlay !== 'undefined') {
-               HSOverlay.init();
-           }
+<!-- Scripts -->
+@stack('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inicializar HSOverlay
+        if (typeof HSOverlay !== 'undefined') {
+            HSOverlay.init();
+        }
 
-           // Inicializar HSDropdown
-           if (typeof HSDropdown !== 'undefined') {
-               HSDropdown.init();
-           }
+        // Inicializar HSDropdown
+        if (typeof HSDropdown !== 'undefined') {
+            HSDropdown.init();
+        }
 
-           // Inicializar HSAccordion
-           if (typeof HSAccordion !== 'undefined') {
-               const accordions = document.querySelectorAll('.hs-accordion');
-               accordions.forEach(accordion => {
-                   new HSAccordion(accordion);
-               });
-           }
+        // Inicializar HSAccordion para el grupo principal
+        if (typeof HSAccordion !== 'undefined') {
+            // Inicializar grupos de acordeones
+            const accordionGroups = document.querySelectorAll('.hs-accordion-group');
+            accordionGroups.forEach(group => {
+                HSAccordion.init(group);
+            });
 
-           // Manejar el cierre del menú móvil al hacer clic en un enlace
-           const mobileMenu = document.getElementById('mobile-menu');
-           if (mobileMenu) {
-               const links = mobileMenu.getElementsByTagName('a');
-               Array.from(links).forEach(link => {
-                   link.addEventListener('click', () => {
-                       HSOverlay.close(mobileMenu);
-                   });
-               });
-           }
-       });
+            // Inicializar acordeones individuales que no estén dentro de grupos
+            const standaloneAccordions = document.querySelectorAll('.hs-accordion:not(.hs-accordion-group .hs-accordion)');
+            standaloneAccordions.forEach(accordion => {
+                HSAccordion.init(accordion);
+            });
+        }
 
-       // Script para los acordeones (lo movemos aquí para asegurar que se ejecute después de la carga del DOM)
-       document.addEventListener('DOMContentLoaded', function() {
-           // Verificar si estamos en alguna ruta de organización
-           const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
-           
-           // Verificar si estamos en alguna ruta de gestión de documentos
-           const isDocumentManagementRoute = {{ Request::routeIs('documents.requests.*') || Request::routeIs('documents.in-progress') || Request::routeIs('documents.in-review') ? 'true' : 'false' }};
-           
-           // Verificar si estamos en alguna ruta de configuración de documentos
-           const isDocumentConfigRoute = {{ Request::routeIs('document-types.*') || Request::routeIs('document-templates.*') ? 'true' : 'false' }};
-           
-           // Función para expandir acordeón
-           const expandAccordion = (accordionId, submenuId) => {
-               const accordion = document.getElementById(accordionId);
-               const content = document.getElementById(submenuId);
-               
-               if (accordion && content) {
-                   accordion.classList.add('hs-accordion-active');
-                   content.classList.remove('hidden');
-                   content.style.height = content.scrollHeight + 'px';
-               }
-           };
-           
-           // Expandir acordeones según la ruta actual
-           if (isOrganizationRoute) {
-               expandAccordion('organization-accordion', 'organization-submenu');
-           }
-           
-           if (isDocumentManagementRoute) {
-               expandAccordion('document-management-accordion', 'document-management-submenu');
-           }
-           
-           if (isDocumentConfigRoute) {
-               expandAccordion('document-config-accordion', 'document-config-submenu');
-           }
-       });
-   </script>
+        // Manejar el cierre del menú móvil al hacer clic en un enlace
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) {
+            const links = mobileMenu.getElementsByTagName('a');
+            Array.from(links).forEach(link => {
+                link.addEventListener('click', () => {
+                    HSOverlay.close(mobileMenu);
+                });
+            });
+        }
+    });
+
+    // Script para los acordeones
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar rutas
+        const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
+        
+        const isDocumentsRoute = {{ Request::routeIs('documents.*') ? 'true' : 'false' }};
+        
+        const isDocumentManagementRoute = {{ 
+            Request::routeIs('documents.requests.*') || 
+            Request::routeIs('documents.in-progress') || 
+            Request::routeIs('documents.in-review') || 
+            Request::routeIs('documents.pending-leader') ? 'true' : 'false' 
+        }};
+        
+        const isDocumentSettingsRoute = {{ 
+            Request::routeIs('document-types.*') || 
+            Request::routeIs('document-templates.*') ? 'true' : 'false' 
+        }};
+
+        // Función mejorada para expandir acordeón
+        const expandAccordion = (accordionId) => {
+            const accordion = document.querySelector(`#${accordionId}`);
+            if (accordion) {
+                const toggle = accordion.querySelector('.hs-accordion-toggle');
+                const content = accordion.querySelector('.hs-accordion-content');
+                
+                if (toggle && content) {
+                    // Expandir el acordeón
+                    toggle.setAttribute('aria-expanded', 'true');
+                    content.classList.remove('hidden');
+                    content.style.height = 'auto';
+                    accordion.classList.add('hs-accordion-active');
+
+                    // Si es un subacordeón, expandir también el padre
+                    const parentAccordion = accordion.closest('.hs-accordion-group > .hs-accordion');
+                    if (parentAccordion && parentAccordion.id !== accordionId) {
+                        expandAccordion(parentAccordion.id);
+                    }
+                }
+            }
+        };
+
+        // Función para verificar si un acordeón está activo
+        const isAccordionActive = (accordionId) => {
+            const accordion = document.querySelector(`#${accordionId}`);
+            return accordion && accordion.classList.contains('hs-accordion-active');
+        };
+
+        // Expandir acordeones basado en la ruta actual
+        if (isOrganizationRoute) {
+            expandAccordion('organization-accordion');
+        }
+
+        if (isDocumentsRoute || isDocumentManagementRoute || isDocumentSettingsRoute) {
+            // Siempre expandir el acordeón principal de documentos primero
+            expandAccordion('documents-accordion');
+            
+            // Luego expandir los subacordeones según la ruta
+            if (isDocumentManagementRoute) {
+                expandAccordion('doc-management-accordion');
+            }
+            
+            if (isDocumentSettingsRoute) {
+                expandAccordion('doc-settings-accordion');
+            }
+        }
+
+        // Manejar la expansión manual de acordeones
+        document.querySelectorAll('.hs-accordion-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const accordion = toggle.closest('.hs-accordion');
+                if (accordion) {
+                    const isExpanding = !isAccordionActive(accordion.id);
+                    if (isExpanding) {
+                        // Si estamos expandiendo, asegurarnos de que el padre también esté expandido
+                        const parentAccordion = accordion.closest('.hs-accordion-group > .hs-accordion');
+                        if (parentAccordion && parentAccordion.id !== accordion.id) {
+                            expandAccordion(parentAccordion.id);
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

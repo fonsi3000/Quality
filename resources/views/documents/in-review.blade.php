@@ -247,135 +247,106 @@
                             <div class="space-y-4">
                                 <!-- Información Principal -->
                                 <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
-                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
+                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
                                         Información Principal
                                     </h4>
                                     <div class="space-y-3">
-                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                                        <div class="flex justify-between items-center">
                                             <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Estado:</span>
-                                            <span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-sm font-medium mt-1 sm:mt-0 {{ $statusClasses[$request->status] }}">
-                                                {{ $statusLabels[$request->status] }}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ match($request->status) {
+                                                'publicado' => 'bg-green-100 text-green-800',
+                                                'rechazado', 'rechazado_lider' => 'bg-red-100 text-red-800',
+                                                'sin_aprobar', 'pendiente_lider' => 'bg-yellow-100 text-yellow-800',
+                                                'en_elaboracion' => 'bg-blue-100 text-blue-800',
+                                                'revision' => 'bg-purple-100 text-purple-800',
+                                                'obsoleto' => 'bg-gray-100 text-gray-800',
+                                                default => 'bg-gray-100 text-gray-800'
+                                            } }}">
+                                                {{ $request->getStatusLabel() }}
                                             </span>
                                         </div>
-                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Tipo:</span>
-                                            <span class="text-sm text-gray-800 dark:text-gray-200 mt-1 sm:mt-0">
-                                                {{ $request->request_type === 'create' ? 'Nuevo Documento' : 'Modificación' }}
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Proceso:</span>
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {{ $request->process->name ?? 'No asignado' }}
                                             </span>
                                         </div>
-                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Documento:</span>
-                                            <span class="text-sm text-gray-800 dark:text-gray-200 mt-1 sm:mt-0">
-                                                {{ $request->document_name }}
-                                            </span>
-                                        </div>
-                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                                        <div class="flex justify-between items-center">
                                             <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Tipo de Documento:</span>
-                                            <span class="text-sm text-gray-800 dark:text-gray-200 mt-1 sm:mt-0">
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                                 {{ $request->documentType->name }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Tipo de Solicitud:</span>
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {{ $request->getRequestTypeLabel() }}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Información de Participantes -->
+        
+                                <!-- Información de Participantes -->                         
+                                <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">                             
+                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                        </svg>
+                                        Participantes                             
+                                    </h4>                             
+                                    <div class="space-y-3">                                 
+                                        <div class="flex justify-between items-center">                                     
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Solicitante:</span>                                     
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">                                         
+                                                {{ $request->user->name }}                                     
+                                            </span>                                 
+                                        </div>                                 
+                                        <div class="flex justify-between items-center">                                     
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Responsable:</span>                                     
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">                                         
+                                                {{ $request->responsible->name ?? 'No asignado' }}                                     
+                                            </span>                                 
+                                        </div>
+                                        <div class="flex justify-between items-center">                                     
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Agente Asignado:</span>                                     
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">                                         
+                                                {{ $request->assignedAgent?->name ?? 'No asignado' }}                                   
+                                            </span>                                 
+                                        </div>                                                              
+                                    </div>                         
+                                </div>
+        
+                                <!-- Origen y Destino -->
                                 <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
                                     <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                                        Participantes
+                                        Ubicación
                                     </h4>
                                     <div class="space-y-3">
-                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Solicitante:</span>
-                                            <span class="text-sm text-gray-800 dark:text-gray-200 mt-1 sm:mt-0">
-                                                {{ $request->user->name }}
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Origen:</span>
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {{ $request->origin }}
                                             </span>
                                         </div>
-                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Responsable:</span>
-                                            <span class="text-sm text-gray-800 dark:text-gray-200 mt-1 sm:mt-0">
-                                                {{ $request->responsible->name }}
-                                            </span>
-                                        </div>
-                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Agente Asignado:</span>
-                                            <span class="text-sm text-gray-800 dark:text-gray-200 mt-1 sm:mt-0">
-                                                @if($request->assigned_agent_id)
-                                                    {{ $request->assignedAgent->name }}
-                                                @else
-                                                    <span class="text-gray-400 dark:text-neutral-500">Sin asignar</span>
-                                                @endif
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Destino:</span>
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {{ $request->destination }}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
+        
                             <!-- Columna Derecha -->
                             <div class="space-y-4">
-                                <!-- Documentos -->
+                                <!-- Descripción y Observaciones -->
                                 <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
-                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                                        Documentos
-                                    </h4>
-                                    <div class="space-y-3">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Documento Original:</span>
-                                            <div class="flex items-center gap-3">
-                                                <a href="{{ route('documents.requests.preview', $request->id) }}"
-                                                   target="_blank"
-                                                   class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
-                                                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                                                        <circle cx="12" cy="12" r="3"/>
-                                                    </svg>
-                                                    Ver documento
-                                                </a>
-                                                <a href="{{ route('documents.requests.download', $request->id) }}"
-                                                   class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
-                                                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                                        <polyline points="7 10 12 15 17 10"/>
-                                                        <line x1="12" x2="12" y1="15" y2="3"/>
-                                                    </svg>
-                                                    Descargar
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        @if($request->final_document_path)
-                                        <div class="flex flex-col mt-4">
-                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Documento Final:</span>
-                                            <div class="flex items-center gap-3">
-                                                <a href="{{ route('documents.requests.preview-final', $request->id) }}"
-                                                   target="_blank"
-                                                   class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
-                                                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                                                        <circle cx="12" cy="12" r="3"/>
-                                                    </svg>
-                                                    Ver documento
-                                                </a>
-                                                <a href="{{ route('documents.requests.download-final', $request->id) }}"
-                                                   class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
-                                                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                                        <polyline points="7 10 12 15 17 10"/>
-                                                        <line x1="12" x2="12" y1="15" y2="3"/>
-                                                    </svg>
-                                                    Descargar
-                                                </a>
-                                            </div>
-                                        </div>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Detalles y Observaciones -->
-                                <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
-                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                                        Detalles
-                                    </h4>
-                                    <div class="space-y-3">
+                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Detalles</h4>
+                                    <div class="space-y-4">
                                         <div>
                                             <span class="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-2">
                                                 Descripción:
@@ -387,14 +358,169 @@
                                         @if($request->observations)
                                         <div>
                                             <span class="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-2">
-                                                Observaciones:
+                                                Observaciones de Calidad:
                                             </span>
                                             <p class="text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-neutral-800 p-3 rounded-lg">
                                                 {{ $request->observations }}
                                             </p>
                                         </div>
                                         @endif
+                                        @if($request->leader_observations)
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-2">
+                                                Observaciones del Líder:
+                                            </span>
+                                            <p class="text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-neutral-800 p-3 rounded-lg">
+                                                {{ $request->leader_observations }}
+                                            </p>
+                                        </div>
+                                        @endif
                                     </div>
+                                </div>
+        
+                                <!-- Fechas -->
+                                <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
+                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        Fechas Importantes
+                                    </h4>
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Creación:</span>
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {{ $request->created_at->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Última actualización:</span>
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {{ $request->updated_at->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                        @if($request->leader_approval_date)
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobación del Líder:</span>
+                                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {{ $request->leader_approval_date->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+        
+                                <!-- Documentos -->
+                                <div class="bg-gray-50 rounded-lg p-4 dark:bg-neutral-700">
+                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        Documentos
+                                    </h4>
+        
+                                    {{-- @can('admin.agent') --}}
+                                    <!-- Documento Borrador -->
+                                    <div class="mb-4">
+                                        <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                            Documento Borrador
+                                        </h5>
+                                        <div class="flex items-center gap-3">
+                                            <a href="{{ route('documents.requests.preview', $request->id) }}"
+                                               target="_blank"
+                                               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-700 dark:hover:text-white transition-colors">
+                                                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                Visualizar
+                                            </a>
+                                            <a href="{{ route('documents.requests.download', $request->id) }}"
+                                               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-700 dark:hover:text-white transition-colors">
+                                                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                </svg>
+                                                Descargar
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {{-- @endcan --}}
+        
+                                    <!-- Documento Final -->
+                                    @if($request->final_document_path)
+                                    <div>
+                                        <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                            Documento Final
+                                            {{-- <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Publicado
+                                            </span> --}}
+                                        </h5>
+                                        <div class="flex items-center gap-3">
+                                            <a href="{{ route('documents.requests.preview-final', $request->id) }}"
+                                               target="_blank"
+                                               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-700 dark:hover:text-white transition-colors">
+                                                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                Visualizar
+                                            </a>
+                                            <a href="{{ route('documents.requests.download-final', $request->id) }}"
+                                               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-700 dark:hover:text-white transition-colors">
+                                                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                </svg>
+                                                Descargar
+                                            </a>
+                                        </div>
+                                    </div>
+                                    @endif
+        
+                                    {{-- <!-- Historial de Versiones -->
+                                    @if($request->hasReferenceDocument() || $request->hasReferencingDocuments())
+                                    <div class="mt-4">
+                                        <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                            Historial de Versiones
+                                        </h5>
+                                        <div class="space-y-3">
+                                            @foreach($request->getVersionHistory() as $version)
+                                            <div class="p-3 rounded-lg bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                                            Versión {{ $version->version }}
+                                                        </span>
+                                                        <span class="text-xs text-gray-500">
+                                                            {{ $version->created_at->format('d/m/Y H:i') }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex items-center gap-3">
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ match($version->status) {
+                                                            'publicado' => 'bg-green-100 text-green-800',
+                                                            'rechazado', 'rechazado_lider' => 'bg-red-100 text-red-800',
+                                                            'sin_aprobar', 'pendiente_lider' => 'bg-yellow-100 text-yellow-800',
+                                                            'en_elaboracion' => 'bg-blue-100 text-blue-800',
+                                                            'revision' => 'bg-purple-100 text-purple-800',
+                                                            'obsoleto' => 'bg-gray-100 text-gray-800',
+                                                            default => 'bg-gray-100 text-gray-800'
+                                                        } }}">
+                                                            {{ $version->getStatusLabel() }}
+                                                        </span>
+                                                        <a href="{{ route('documents.requests.preview', $version->id) }}"
+                                                           target="_blank"
+                                                           class="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400">
+                                                            <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                            </svg>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    @endif --}}
                                 </div>
                             </div>
                         </div>

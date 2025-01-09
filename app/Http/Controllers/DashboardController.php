@@ -4,31 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\DocumentRequest;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Conteo de usuarios activos e inactivos
-        $activeUsersCount = User::where('active', true)->count();
-        $inactiveUsersCount = User::where('active', false)->count();
+        // Obtener el usuario actual
+        $usuarioActual = Auth::user();
 
-        // Conteo de tareas activas
-        $activeTasks = DocumentRequest::whereNotIn('status', [
-            DocumentRequest::STATUS_PUBLICADO,
-            DocumentRequest::STATUS_RECHAZADO
-        ])->count();
+        // Conteo de usuarios activos e inactivos
+        $usuariosActivos = User::where('active', true)->count();
+        $usuariosInactivos = User::where('active', false)->count();
+
+        // Conteo de tareas para el usuario responsable
+        $activeTasks = DocumentRequest::where('responsible_id', $usuarioActual->id)
+            ->whereIn('status', [
+                DocumentRequest::STATUS_SIN_APROBAR,
+                DocumentRequest::STATUS_REVISION
+            ])
+            ->count();
+
+        // Si el usuario es agente asignado, sumar también las tareas en elaboración
+        $activeTasks += DocumentRequest::where('assigned_agent_id', $usuarioActual->id)
+            ->where('status', DocumentRequest::STATUS_EN_ELABORACION)
+            ->count();
 
         // Conteo de documentos publicados
-        $publishedDocuments = DocumentRequest::where('status', 
+        $documentosPublicados = DocumentRequest::where(
+            'status',
             DocumentRequest::STATUS_PUBLICADO
         )->count();
 
         return view('dashboard', compact(
-            'activeUsersCount',
-            'inactiveUsersCount',
+            'usuariosActivos',
+            'usuariosInactivos',
             'activeTasks',
-            'publishedDocuments'
+            'documentosPublicados'
         ));
     }
 }
