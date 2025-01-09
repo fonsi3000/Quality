@@ -27,7 +27,7 @@
                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400"
                            placeholder="Buscar por nombre, tipo...">
                 </div>
-
+    
                 <!-- Filtro por Tipo de Documento -->
                 <div>
                     <label for="document_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
@@ -44,31 +44,45 @@
                         @endforeach
                     </select>
                 </div>
-
-                <!-- Rango de Fechas -->
-                <div>
-                    <label for="date_from" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                        Desde
+    
+                <!-- Filtro por Proceso -->
+                <div class="relative">
+                    <label for="process_search" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Proceso
                     </label>
-                    <input type="date" 
-                           name="date_from" 
-                           id="date_from"
-                           value="{{ request('date_from') }}"
-                           class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400">
+                    <div class="relative">
+                        <input
+                            type="text"
+                            id="process_search"
+                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400"
+                            placeholder="Buscar proceso..."
+                            autocomplete="off"
+                        >
+                        <input type="hidden" name="process_id" id="process_id" value="{{ request('process_id') }}">
+                        
+                        <!-- Dropdown de autocompletado -->
+                        <div id="process_dropdown" 
+                             class="hidden absolute left-0 right-0 z-50 w-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                            <!-- Las opciones se agregarán dinámicamente aquí -->
+                        </div>
+                    </div>
                 </div>
-
+    
+                <!-- Filtro por Público/Privado -->
                 <div>
-                    <label for="date_to" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                        Hasta
+                    <label for="is_public" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Visibilidad
                     </label>
-                    <input type="date" 
-                           name="date_to" 
-                           id="date_to"
-                           value="{{ request('date_to') }}"
-                           class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400">
+                    <select name="is_public" 
+                            id="is_public" 
+                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400">
+                        <option value="all">Todos</option>
+                        <option value="1" {{ request('is_public') == '1' ? 'selected' : '' }}>Público</option>
+                        <option value="0" {{ request('is_public') == '0' ? 'selected' : '' }}>Privado</option>
+                    </select>
                 </div>
             </div>
-
+    
             <!-- Botones de Acción -->
             <div class="mt-4 flex justify-end gap-x-2">
                 <a href="{{ route('documents.published') }}" 
@@ -580,6 +594,69 @@
                                 </div>
                             </div>
                         @endcan
+                        @if(Auth::user()->can('admin.agent') || (Auth::user()->process && Auth::user()->process->leader_id == Auth::id()))
+                        <!-- Estado de Visibilidad -->
+
+                        <div class="bg-gray-50 rounded-xl p-6 dark:bg-neutral-700 border border-gray-100 dark:border-neutral-600 mt-4">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                                <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                Estado de Visibilidad
+                            </h4>
+                            <div class="space-y-4">
+                                <!-- Estado actual -->
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-600">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex-shrink-0">
+                                            @if($request->is_public)
+                                                <span class="inline-flex items-center justify-center size-8 rounded-full bg-green-100 dark:bg-green-900/50">
+                                                    <svg class="size-4 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                    </svg>
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center justify-center size-8 rounded-full bg-yellow-100 dark:bg-yellow-900/50">
+                                                    <svg class="size-4 text-yellow-600 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                                    </svg>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                Estado actual: {{ $request->is_public ? 'Público' : 'Privado' }}
+                                            </p>
+                                            <p class="text-sm text-gray-500 dark:text-neutral-400">
+                                                {{ $request->is_public ? 'Este documento es visible para todos los usuarios.' : 'Este documento solo es visible para usuarios de tu proceso.' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <form action="{{ route('documents.requests.toggle-visibility', $request->id) }}" method="POST" class="flex-shrink-0">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors
+                                                {{ $request->is_public 
+                                                    ? 'text-yellow-700 bg-yellow-100 hover:bg-yellow-200 border-yellow-200 dark:bg-yellow-900/50 dark:border-yellow-800 dark:text-yellow-400'
+                                                    : 'text-green-700 bg-green-100 hover:bg-green-200 border-green-200 dark:bg-green-900/50 dark:border-green-800 dark:text-green-400' }}">
+                                            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                @if($request->is_public)
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                                @else
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                @endif
+                                            </svg>
+                                            {{ $request->is_public ? 'Hacer Privado' : 'Hacer Público' }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                         </div>
                     </div>
                 </div>
@@ -605,12 +682,66 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Referencias a elementos del formulario
         const form = document.getElementById('filter-form');
         const searchInput = document.getElementById('search');
         const typeFilter = document.getElementById('document_type_id');
-        const dateFromInput = document.getElementById('date_from');
-        const dateToInput = document.getElementById('date_to');
+        const processSearch = document.getElementById('process_search');
+        const processId = document.getElementById('process_id');
+        const isPublicFilter = document.getElementById('is_public');
+        const dropdown = document.getElementById('process_dropdown');
+        
+        // Inicialización del autocompletado de procesos
+        const processes = @json($processes);
+        
+        // Establecer el valor inicial del proceso si existe
+        if (processId.value) {
+            const selectedProcess = processes.find(p => p.id == processId.value);
+            if (selectedProcess) {
+                processSearch.value = selectedProcess.name;
+            }
+        }
 
+        // Funciones para el autocompletado
+        function filterProcesses(searchTerm) {
+            return processes.filter(process => 
+                process.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        function updateDropdown(filteredProcesses) {
+            dropdown.innerHTML = '';
+            
+            // Agregar opción "Todos los procesos"
+            const allOption = document.createElement('div');
+            allOption.className = 'px-4 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 cursor-pointer';
+            allOption.textContent = 'Todos los procesos';
+            allOption.onclick = () => {
+                processSearch.value = '';
+                processId.value = 'all';
+                dropdown.classList.add('hidden');
+                // Disparar evento para actualizar filtros
+                processId.dispatchEvent(new Event('change'));
+            };
+            dropdown.appendChild(allOption);
+
+            // Agregar procesos filtrados
+            filteredProcesses.forEach(process => {
+                const div = document.createElement('div');
+                div.className = 'px-4 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 cursor-pointer';
+                div.textContent = process.name;
+                div.onclick = () => {
+                    processSearch.value = process.name;
+                    processId.value = process.id;
+                    dropdown.classList.add('hidden');
+                    // Disparar evento para actualizar filtros
+                    processId.dispatchEvent(new Event('change'));
+                };
+                dropdown.appendChild(div);
+            });
+        }
+
+        // Función para actualizar la URL y hacer la petición
         function updateURL(params) {
             const url = new URL(window.location.href);
             
@@ -653,16 +784,43 @@
             updateURL(formData);
         }
 
-        // Event listeners
-        typeFilter.addEventListener('change', applyFilters);
-        dateFromInput.addEventListener('change', applyFilters);
-        dateToInput.addEventListener('change', applyFilters);
+        // Event listeners para el autocompletado de procesos
+        processSearch.addEventListener('input', function() {
+            const filtered = filterProcesses(this.value);
+            updateDropdown(filtered);
+            dropdown.classList.remove('hidden');
+        });
 
-        // Debounce para la búsqueda por texto
-        let timeout = null;
+        processSearch.addEventListener('focus', function() {
+            const filtered = filterProcesses(this.value);
+            updateDropdown(filtered);
+            dropdown.classList.remove('hidden');
+        });
+
+        // Cerrar dropdown cuando se hace clic fuera
+        document.addEventListener('click', function(e) {
+            if (!processSearch.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Prevenir que el formulario se envíe al presionar enter en el campo de búsqueda de proceso
+        processSearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+            }
+        });
+
+        // Event listeners para los filtros
+        typeFilter.addEventListener('change', applyFilters);
+        processId.addEventListener('change', applyFilters);
+        isPublicFilter.addEventListener('change', applyFilters);
+
+        // Debounce para el campo de búsqueda general
+        let searchTimeout = null;
         searchInput.addEventListener('input', function() {
-            clearTimeout(timeout);
-            timeout = setTimeout(applyFilters, 500);
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(applyFilters, 500);
         });
 
         // Prevenir el submit por defecto del formulario

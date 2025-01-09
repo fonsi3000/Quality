@@ -45,7 +45,8 @@ class DocumentRequest extends Model
         'leader_approval_date',
         'version',
         'process_id',
-        'reference_document_id'  
+        'reference_document_id',
+        'is_public'
     ];
 
     // Conversión de tipos de datos
@@ -55,11 +56,12 @@ class DocumentRequest extends Model
         'version' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        'leader_approval_date' => 'datetime'
+        'leader_approval_date' => 'datetime',
+        'is_public' => 'boolean'
     ];
 
     // Relaciones con otros modelos
-    
+
     /**
      * Relación con el usuario que crea la solicitud
      */
@@ -132,7 +134,7 @@ class DocumentRequest extends Model
     public function scopeSearch($query, $search)
     {
         return $query->where('document_name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+            ->orWhere('description', 'like', "%{$search}%");
     }
 
     /**

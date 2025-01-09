@@ -1348,17 +1348,19 @@ class DocumentRequestController extends Controller
                 'process'
             ]);
 
-            // Primero verificamos si es admin.agent
+            // Verificar si es admin.agent
             if (Auth::user()->can('admin.agent')) {
-                // Si es admin.agent, mostramos todos los documentos publicados
                 $query->where('status', DocumentRequest::STATUS_PUBLICADO);
             } else {
-                // Si no es admin.agent, filtramos por proceso y estado publicado
+                // Usuario regular: Mostrar documentos públicos O documentos de su proceso
                 $query->where('status', DocumentRequest::STATUS_PUBLICADO)
-                    ->where('process_id', Auth::user()->process_id);
+                    ->where(function ($q) {
+                        $q->where('is_public', true)
+                            ->orWhere('process_id', Auth::user()->process_id);
+                    });
             }
 
-            // Resto del código de búsqueda y filtros...
+            // Filtro de búsqueda por texto
             if ($request->has('search')) {
                 $searchTerm = $request->search;
                 $query->where(function ($q) use ($searchTerm) {
@@ -1373,12 +1375,24 @@ class DocumentRequestController extends Controller
                 });
             }
 
+            // Filtro por tipo de documento
             if ($request->has('document_type_id') && $request->document_type_id != 'all') {
                 $query->where('document_type_id', $request->document_type_id);
             }
 
+            // Filtro por proceso
+            if ($request->has('process_id') && $request->process_id != 'all') {
+                $query->where('process_id', $request->process_id);
+            }
+
+            // Filtro por público/privado
+            if ($request->has('is_public') && $request->is_public != 'all') {
+                $query->where('is_public', $request->is_public);
+            }
+
             $documentRequests = $query->latest()->paginate(10);
             $documentTypes = DocumentType::where('is_active', true)->get();
+            $processes = Process::where('active', true)->get();
             $users = User::where('active', true)->get();
 
             // Clases de estado actualizadas
@@ -1394,8 +1408,6 @@ class DocumentRequestController extends Controller
             ];
 
             $statusLabels = DocumentRequest::getStatusOptions();
-
-            // Agregamos la variable para controlar permisos de edición/eliminación
             $canManageDocuments = Auth::user()->can('admin.agent');
 
             return view('documents.published', compact(
@@ -1404,6 +1416,7 @@ class DocumentRequestController extends Controller
                 'statusLabels',
                 'users',
                 'documentTypes',
+                'processes',
                 'canManageDocuments'
             ));
         } catch (\Exception $e) {
@@ -1901,6 +1914,37 @@ class DocumentRequestController extends Controller
             ]);
 
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    public function toggleVisibility(DocumentRequest $documentRequest)  // Cambiado de $request a $documentRequest
+    {
+        try {
+            $oldState = $documentRequest->is_public;
+
+            $documentRequest->update([
+                'is_public' => !$documentRequest->is_public
+            ]);
+
+            Log::info('Visibilidad del documento actualizada', [
+                'document_id' => $documentRequest->id,
+                'old_state' => $oldState ? 'público' : 'privado',
+                'new_state' => $documentRequest->is_public ? 'público' : 'privado'
+            ]);
+
+            return redirect()->back()->with(
+                'success',
+                $documentRequest->is_public ?
+                    'El documento ahora es público.' :
+                    'El documento ahora es privado.'
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al cambiar visibilidad del documento', [
+                'document_id' => $documentRequest->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'No se pudo cambiar la visibilidad del documento.');
         }
     }
 }

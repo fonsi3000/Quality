@@ -10,37 +10,40 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Obtener el usuario actual
+        // Conteo de usuarios activos e inactivos (mantener original)
+        $activeUsersCount = User::where('active', true)->count();
+        $inactiveUsersCount = User::where('active', false)->count();
+
+        // Obtener usuario actual para las tareas
         $usuarioActual = Auth::user();
 
-        // Conteo de usuarios activos e inactivos
-        $usuariosActivos = User::where('active', true)->count();
-        $usuariosInactivos = User::where('active', false)->count();
-
-        // Conteo de tareas para el usuario responsable
-        $activeTasks = DocumentRequest::where('responsible_id', $usuarioActual->id)
-            ->whereIn('status', [
-                DocumentRequest::STATUS_SIN_APROBAR,
-                DocumentRequest::STATUS_REVISION
-            ])
+        // Conteo específico de tareas para el usuario actual
+        $activeTasks = DocumentRequest::where(function ($query) use ($usuarioActual) {
+            // Documentos donde es responsable (sin aprobar o en revisión)
+            $query->where('responsible_id', $usuarioActual->id)
+                ->whereIn('status', [
+                    DocumentRequest::STATUS_SIN_APROBAR,
+                    DocumentRequest::STATUS_REVISION
+                ]);
+        })
+            ->orWhere(function ($query) use ($usuarioActual) {
+                // Documentos donde es agente asignado (en elaboración)
+                $query->where('assigned_agent_id', $usuarioActual->id)
+                    ->where('status', DocumentRequest::STATUS_EN_ELABORACION);
+            })
             ->count();
 
-        // Si el usuario es agente asignado, sumar también las tareas en elaboración
-        $activeTasks += DocumentRequest::where('assigned_agent_id', $usuarioActual->id)
-            ->where('status', DocumentRequest::STATUS_EN_ELABORACION)
-            ->count();
-
-        // Conteo de documentos publicados
-        $documentosPublicados = DocumentRequest::where(
+        // Conteo de documentos publicados (mantener original)
+        $publishedDocuments = DocumentRequest::where(
             'status',
             DocumentRequest::STATUS_PUBLICADO
         )->count();
 
         return view('dashboard', compact(
-            'usuariosActivos',
-            'usuariosInactivos',
+            'activeUsersCount',
+            'inactiveUsersCount',
             'activeTasks',
-            'documentosPublicados'
+            'publishedDocuments'
         ));
     }
 }
