@@ -430,7 +430,7 @@
                                     Documentos Asociados
                                 </h4>
 
-                                @can('admin.agent')
+                                @can('admin.only')
                                 <!-- Documento Borrador -->
                                 <div class="mb-6">
                                     <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -486,7 +486,7 @@
                                     </div>
                                 </div>
                                 @endif
-                                @can('admin.agent')
+                                @can('admin.only')
                                 <!-- Historial de Versiones -->
                                 @if($request->hasReferenceDocument() || $request->hasReferencingDocuments())
                                 <div class="mt-6">
@@ -594,7 +594,7 @@
                                 </div>
                             </div>
                         @endcan
-                        @if(Auth::user()->can('admin.agent') || (Auth::user()->process && Auth::user()->process->leader_id == Auth::id()))
+                        @if(Auth::user()->can('admin.only') || (Auth::user()->process && Auth::user()->process->leader_id == Auth::id()))
                         <!-- Estado de Visibilidad -->
 
                         <div class="bg-gray-50 rounded-xl p-6 dark:bg-neutral-700 border border-gray-100 dark:border-neutral-600 mt-4">

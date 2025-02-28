@@ -17,7 +17,7 @@ class UserController extends Controller
 {
     protected $roleNames = [
         'admin' => 'Líder de Calidad',
-        'agent' => 'Profesional de Calidad',
+        'agent' => 'Auditor',
         'user' => 'Colaborador'
     ];
 
@@ -28,9 +28,9 @@ class UserController extends Controller
         // Aplicar filtros
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%");
+                    ->orWhere('email', 'LIKE', "%{$search}%");
             });
         }
 
@@ -39,7 +39,7 @@ class UserController extends Controller
         }
 
         if ($request->filled('role')) {
-            $query->whereHas('roles', function($q) use ($request) {
+            $query->whereHas('roles', function ($q) use ($request) {
                 $q->where('name', $request->role);
             });
         }
@@ -60,11 +60,11 @@ class UserController extends Controller
         // Paginación manteniendo los parámetros de consulta
         $users = $query->paginate(10);
         $users->appends($request->except('page'));
-        
+
         // Obtener datos para los filtros
         $units = Unit::where('active', true)->orderBy('name')->get();
         $processes = Process::where('active', true)->orderBy('name')->get();
-        $roles = collect($this->roleNames)->map(function($name, $key) {
+        $roles = collect($this->roleNames)->map(function ($name, $key) {
             return (object)['name' => $key, 'display_name' => $name];
         });
 
@@ -74,14 +74,14 @@ class UserController extends Controller
     public function create()
     {
         $units = Unit::where('active', true)
-                    ->orderBy('name')
-                    ->get();
+            ->orderBy('name')
+            ->get();
         $processes = Process::where('active', true)
-                          ->orderBy('name')
-                          ->get();
+            ->orderBy('name')
+            ->get();
         $positions = Position::where('active', true)
-                          ->orderBy('name')
-                          ->get();
+            ->orderBy('name')
+            ->get();
         $roles = Role::orderBy('name')->get();
         $roleNames = $this->roleNames;
 
@@ -98,7 +98,7 @@ class UserController extends Controller
         }
 
         $validated['password'] = Hash::make($validated['password']);
-        
+
         // Crear usuario
         $user = User::create($validated);
 
@@ -115,14 +115,14 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $units = Unit::where('active', true)
-                    ->orderBy('name')
-                    ->get();
+            ->orderBy('name')
+            ->get();
         $processes = Process::where('active', true)
-                          ->orderBy('name')
-                          ->get();
+            ->orderBy('name')
+            ->get();
         $positions = Position::where('active', true)
-                          ->orderBy('name')
-                          ->get();
+            ->orderBy('name')
+            ->get();
         $roles = Role::orderBy('name')->get();
         $userRole = $user->roles->first();
         $roleNames = $this->roleNames;

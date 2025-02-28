@@ -198,7 +198,7 @@
                                     Documentos
                                 </h4>
 
-                                @can('admin.agent')
+                                @can('admin.only')
                                 <!-- Documento Borrador -->
                                 <div class="mb-4">
                                     <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -307,7 +307,7 @@
 
                 <!-- Footer del Modal -->
                 <div class="flex flex-col sm:flex-row justify-end items-center gap-3 py-3 px-4 border-t dark:border-neutral-700">
-                    @can('admin.agent')
+                    @can('admin.only')
                     <a href="{{ route('documents.requests.preview', $request->id) }}"
                        target="_blank"
                        class="w-full sm:w-auto py-2.5 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-700 dark:hover:text-white transition-colors">

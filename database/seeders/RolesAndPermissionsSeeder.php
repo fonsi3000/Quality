@@ -19,14 +19,13 @@ class RolesAndPermissionsSeeder extends Seeder
         $user = Role::create(['name' => 'user']);
 
         // Create permissions
-        $adminagent = Permission::create(['name' => 'admin.agent']);
         $userview = Permission::create(['name' => 'user']);
-        $viewAgent = Permission::create(['name' => 'view.agent']);
+        $viewAgent = Permission::create(['name' => 'agent']);
         $adminOnly = Permission::create(['name' => 'admin.only']); // Nuevo permiso solo para admin
 
         // Assign permissions to roles
-        $admin->givePermissionTo([$adminagent, $adminOnly]); // Admin tiene sus permisos exclusivos
-        $agent->givePermissionTo([$adminagent, $viewAgent]); // Agente mantiene sus permisos
+        $admin->givePermissionTo($adminOnly); // Admin tiene sus permisos exclusivos
+        $agent->givePermissionTo($viewAgent); // Agente y usuario
         $user->givePermissionTo($userview);
     }
 }

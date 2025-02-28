@@ -440,7 +440,7 @@
                                     Documentos Asociados
                                 </h4>
 
-                                @can('admin.agent')
+                                @can('admin.only')
                                 <!-- Documento Borrador -->
                                 <div class="mb-6">
                                     <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

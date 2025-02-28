@@ -91,7 +91,7 @@ class DocumentRequestController extends Controller
             // Obtener usuarios activos con roles admin o agent
             $users = User::where('active', true)
                 ->whereHas('roles', function ($query) {
-                    $query->whereIn('name', ['admin', 'agent']);
+                    $query->whereIn('name', ['admin']);
                 })
                 ->get();
 
@@ -745,15 +745,15 @@ class DocumentRequestController extends Controller
             // Verificar que el usuario asignado tenga el rol correcto
             $assignedUser = User::whereId($validated['assigned_agent_id'])
                 ->whereHas('roles', function ($query) {
-                    $query->whereIn('name', ['admin', 'agent']);
+                    $query->whereIn('name', ['admin']);
                 })
                 ->first();
 
             if (!$assignedUser) {
-                throw new \Exception('El usuario asignado debe tener rol de administrador o agente.');
+                throw new \Exception('El usuario asignado debe tener rol de administrador.');
             }
 
-            // Verificar si el agente pertenece al mismo proceso o es admin
+            // Verificar si el agente pertenece al mismo proceso o es admin  
             if (
                 !$assignedUser->hasRole('admin') &&
                 $assignedUser->process_id !== $documentRequest->process_id
@@ -1044,7 +1044,7 @@ class DocumentRequestController extends Controller
             ])->where('status', DocumentRequest::STATUS_PENDIENTE_LIDER);
 
             // 2. Filtrar por procesos donde es líder si no es admin
-            if (!Auth::user()->hasPermissionTo('admin.agent')) {
+            if (!Auth::user()->hasPermissionTo('admin.only')) {
                 $userProcessesAsLeader = Process::where('leader_id', Auth::id())->pluck('id');
 
                 if ($userProcessesAsLeader->isEmpty()) {
@@ -1348,8 +1348,8 @@ class DocumentRequestController extends Controller
                 'process'
             ]);
 
-            // Verificar si es admin.agent
-            if (Auth::user()->can('admin.agent')) {
+            // Verificar si es admin.only
+            if (Auth::user()->hasRole(['admin', 'agent'])) {
                 $query->where('status', DocumentRequest::STATUS_PUBLICADO);
             } else {
                 // Usuario regular: Mostrar documentos públicos O documentos de su proceso
@@ -1408,7 +1408,7 @@ class DocumentRequestController extends Controller
             ];
 
             $statusLabels = DocumentRequest::getStatusOptions();
-            $canManageDocuments = Auth::user()->can('admin.agent');
+            $canManageDocuments = Auth::user()->can('admin');
 
             return view('documents.published', compact(
                 'documentRequests',

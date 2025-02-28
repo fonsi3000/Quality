@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class LoginController extends Controller 
+class LoginController extends Controller
 {
     public function login(Request $request)
     {
@@ -37,10 +37,10 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            
+
             // Redirección basada en rol
-            $redirectTo = $user->hasRole(['admin', 'agent']) 
-                ? '/dashboard' 
+            $redirectTo = $user->hasRole(['admin'])
+                ? '/dashboard'
                 : '/documents/published';
 
             return response()->json([

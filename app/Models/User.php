@@ -74,14 +74,14 @@ class User extends Authenticatable
     public function scopeSearch($query, $search)
     {
         return $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('department', 'like', "%{$search}%");
+            ->orWhere('email', 'like', "%{$search}%")
+            ->orWhere('department', 'like', "%{$search}%");
     }
     public function getFriendlyRoleName()
     {
         $roleNames = [
             'admin' => 'Líder de Calidad',
-            'agent' => 'Profesional de Calidad',
+            'agent' => 'Auditor',
             'user' => 'Colaborador'
         ];
 
