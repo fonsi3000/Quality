@@ -1361,7 +1361,7 @@ class DocumentRequestController extends Controller
             }
 
             // Filtro de búsqueda por texto
-            if ($request->has('search')) {
+            if ($request->filled('search')) {
                 $searchTerm = $request->search;
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('document_name', 'like', "%{$searchTerm}%")
@@ -1376,18 +1376,26 @@ class DocumentRequestController extends Controller
             }
 
             // Filtro por tipo de documento
-            if ($request->has('document_type_id') && $request->document_type_id != 'all') {
+            if ($request->filled('document_type_id') && $request->document_type_id != 'all') {
                 $query->where('document_type_id', $request->document_type_id);
             }
 
             // Filtro por proceso
-            if ($request->has('process_id') && $request->process_id != 'all') {
+            if ($request->filled('process_id') && $request->process_id != 'all') {
                 $query->where('process_id', $request->process_id);
             }
 
             // Filtro por público/privado
             if ($request->has('is_public') && $request->is_public != 'all') {
                 $query->where('is_public', $request->is_public);
+            }
+
+            // Filtrar por rango de fechas
+            if ($request->filled('date_from')) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('created_at', '<=', $request->date_to);
             }
 
             $documentRequests = $query->latest()->paginate(10);
@@ -1430,7 +1438,6 @@ class DocumentRequestController extends Controller
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
-
     public function search(Request $request)
     {
         try {
@@ -1851,6 +1858,9 @@ class DocumentRequestController extends Controller
             // Filtrar por proceso si el usuario no es admin
             if (!Auth::user()->hasRole('admin')) {
                 $query->where('process_id', Auth::user()->process_id);
+            } else if ($request->has('process_id') && $request->process_id != 'all') {
+                // Filtro de proceso para admin (si selecciona un proceso específico)
+                $query->where('process_id', $request->process_id);
             }
 
             // Aplicar búsqueda
@@ -1883,6 +1893,7 @@ class DocumentRequestController extends Controller
 
             $documentRequests = $query->latest()->paginate(10);
             $documentTypes = DocumentType::where('is_active', true)->get();
+            $processes = Process::where('active', true)->get();
             $users = User::where('active', true)->get();
 
             $statusClasses = [
@@ -1903,7 +1914,8 @@ class DocumentRequestController extends Controller
                 'statusClasses',
                 'statusLabels',
                 'users',
-                'documentTypes'
+                'documentTypes',
+                'processes'
             ));
         } catch (\Exception $e) {
             Log::error('Error en masterdocument DocumentRequest', [
@@ -1916,7 +1928,6 @@ class DocumentRequestController extends Controller
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
-
     public function toggleVisibility(DocumentRequest $documentRequest)  // Cambiado de $request a $documentRequest
     {
         try {

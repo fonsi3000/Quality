@@ -48,10 +48,10 @@
                     </div>
 
                     <!-- Filtro por estado -->
+                    <!-- Filtro por estado -->
                     <div>
                         <select name="status" 
                                 class="py-2 px-3 pe-9 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400">
-                            <option value="">Todos los estados</option>
                             <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Activos</option>
                             <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inactivos</option>
                         </select>
@@ -307,80 +307,80 @@
 </div>
 
 @push('scripts')
-<script>
-// Funciones existentes del modal...
+    <script>
+    // Funciones existentes del modal...
 
-function filterUsers(searchTerm) {
-    const usersList = document.getElementById('usersList');
-    const noResults = document.getElementById('noResults');
-    const labels = usersList.getElementsByTagName('label');
-    let hasResults = false;
+    function filterUsers(searchTerm) {
+        const usersList = document.getElementById('usersList');
+        const noResults = document.getElementById('noResults');
+        const labels = usersList.getElementsByTagName('label');
+        let hasResults = false;
 
-    searchTerm = searchTerm.toLowerCase();
+        searchTerm = searchTerm.toLowerCase();
 
-    for (const label of labels) {
-        const userName = label.textContent.trim().toLowerCase();
-        if (userName.includes(searchTerm)) {
-            label.classList.remove('hidden');
-            hasResults = true;
-        } else {
-            label.classList.add('hidden');
+        for (const label of labels) {
+            const userName = label.textContent.trim().toLowerCase();
+            if (userName.includes(searchTerm)) {
+                label.classList.remove('hidden');
+                hasResults = true;
+            } else {
+                label.classList.add('hidden');
+            }
         }
+
+        // Mostrar/ocultar mensaje de no resultados
+        noResults.classList.toggle('hidden', hasResults);
     }
 
-    // Mostrar/ocultar mensaje de no resultados
-    noResults.classList.toggle('hidden', hasResults);
-}
-
-function openAssignLeaderModal(processId, currentLeaderId = '') {
-    const modal = document.getElementById('assignLeaderModal');
-    const form = document.getElementById('assignLeaderForm');
-    const searchInput = document.getElementById('searchUser');
-    
-    form.action = `/processes/${processId}/assign-leader`;
-    
-    // Limpiar búsqueda y mostrar todos los usuarios
-    searchInput.value = '';
-    filterUsers('');
-    
-    // Seleccionar el líder actual si existe
-    if (currentLeaderId) {
-        const radio = form.querySelector(`input[value="${currentLeaderId}"]`);
-        if (radio) radio.checked = true;
+    function openAssignLeaderModal(processId, currentLeaderId = '') {
+        const modal = document.getElementById('assignLeaderModal');
+        const form = document.getElementById('assignLeaderForm');
+        const searchInput = document.getElementById('searchUser');
+        
+        form.action = `/processes/${processId}/assign-leader`;
+        
+        // Limpiar búsqueda y mostrar todos los usuarios
+        searchInput.value = '';
+        filterUsers('');
+        
+        // Seleccionar el líder actual si existe
+        if (currentLeaderId) {
+            const radio = form.querySelector(`input[value="${currentLeaderId}"]`);
+            if (radio) radio.checked = true;
+        }
+        
+        modal.classList.remove('hidden');
+        searchInput.focus();
     }
-    
-    modal.classList.remove('hidden');
-    searchInput.focus();
-}
 
-function closeAssignLeaderModal() {
-    const modal = document.getElementById('assignLeaderModal');
-    modal.classList.add('hidden');
-}
+    function closeAssignLeaderModal() {
+        const modal = document.getElementById('assignLeaderModal');
+        modal.classList.add('hidden');
+    }
 
-// Inicializar la búsqueda cuando el documento esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchUser');
-    
-    searchInput.addEventListener('input', function(e) {
-        filterUsers(e.target.value);
+    // Inicializar la búsqueda cuando el documento esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchUser');
+        
+        searchInput.addEventListener('input', function(e) {
+            filterUsers(e.target.value);
+        });
+
+        // Prevenir el envío del formulario al presionar enter en la búsqueda
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+            }
+        });
     });
 
-    // Prevenir el envío del formulario al presionar enter en la búsqueda
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
+    // Cerrar el modal al hacer clic fuera
+    window.onclick = function(event) {
+        const modal = document.getElementById('assignLeaderModal');
+        if (event.target == modal) {
+            closeAssignLeaderModal();
         }
-    });
-});
-
-// Cerrar el modal al hacer clic fuera
-window.onclick = function(event) {
-    const modal = document.getElementById('assignLeaderModal');
-    if (event.target == modal) {
-        closeAssignLeaderModal();
     }
-}
-</script>
+    </script>
 @endpush
 @endsection

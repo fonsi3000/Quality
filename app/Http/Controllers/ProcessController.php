@@ -14,13 +14,13 @@ class ProcessController extends Controller
         $query = Process::with('leader');
 
         // Búsqueda
-        if ($request->has('search') && $request->search !== null) {
+        if ($request->filled('search')) {
             $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhereHas('leader', function($q) use ($searchTerm) {
-                      $q->where('name', 'LIKE', "%{$searchTerm}%");
-                  });
+                    ->orWhereHas('leader', function ($q) use ($searchTerm) {
+                        $q->where('name', 'LIKE', "%{$searchTerm}%");
+                    });
             });
         }
 
@@ -153,7 +153,6 @@ class ProcessController extends Controller
             return redirect()
                 ->route('processes.index')
                 ->with('success', 'Proceso eliminado exitosamente.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             $errorMessage = $e->getMessage() ?: 'No se puede eliminar el proceso porque está en uso.';
@@ -192,7 +191,6 @@ class ProcessController extends Controller
             return redirect()
                 ->route('processes.index')
                 ->with('success', 'Líder asignado exitosamente.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             $errorMessage = $e->getMessage() ?: 'Error al asignar el líder.';
@@ -220,9 +218,9 @@ class ProcessController extends Controller
     {
         try {
             DB::beginTransaction();
-            
+
             $process->update(['leader_id' => null]);
-            
+
             DB::commit();
 
             if ($request->ajax()) {
@@ -234,7 +232,6 @@ class ProcessController extends Controller
             return redirect()
                 ->route('processes.index')
                 ->with('success', 'Líder removido exitosamente.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             $errorMessage = $e->getMessage() ?: 'Error al remover el líder.';

@@ -244,7 +244,7 @@ class DocumentRequest extends Model
         return !in_array($this->status, [
             self::STATUS_EN_ELABORACION,
             self::STATUS_REVISION,
-            self::STATUS_PUBLICADO,
+            // self::STATUS_PUBLICADO,
             self::STATUS_RECHAZADO,
             self::STATUS_OBSOLETO
         ]);
