@@ -185,6 +185,7 @@ class DocumentRequestController extends Controller
             'document_type_id' => $request->request_type === 'create' ? 'required|exists:document_types,id' : 'nullable',
             'document_name' => $request->request_type === 'create' ? 'required|string|max:255' : 'nullable',
             'existing_document_id' => in_array($request->request_type, ['modify', 'obsolete']) ? 'required|exists:document_requests,id' : 'nullable',
+            'created_at' => 'required|date', // Validación para la fecha personalizada
         ]);
 
         try {
@@ -234,7 +235,7 @@ class DocumentRequestController extends Controller
                 'process_id' => $userProcess->id,
                 'origin' => $userProcess->name,
                 'responsible_id' => $responsible->id,
-                'destination' => 'Calidad'
+                'destination' => 'Calidad',
             ];
 
             // Procesar según el tipo de solicitud
@@ -261,6 +262,10 @@ class DocumentRequestController extends Controller
             // Crear el documento y establecer el estado inicial usando el método del modelo
             $documentRequest = new DocumentRequest($documentData);
             $documentRequest->setInitialStatus(); // Aplicamos la lógica del modelo
+
+            // Asignamos la fecha de creación personalizada
+            $documentRequest->created_at = $validated['created_at'];
+
             $documentRequest->save();
 
             DB::commit();
@@ -271,7 +276,8 @@ class DocumentRequestController extends Controller
                 'status' => $documentRequest->status,
                 'user_id' => Auth::id(),
                 'process_id' => $userProcess->id,
-                'responsible_id' => $responsible->id
+                'responsible_id' => $responsible->id,
+                'created_at' => $validated['created_at'] // Registramos la fecha personalizada en los logs
             ]);
 
             return redirect()
@@ -297,7 +303,6 @@ class DocumentRequestController extends Controller
                 ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
         }
     }
-
     public function show(DocumentRequest $documentRequest)
     {
         try {
@@ -387,7 +392,8 @@ class DocumentRequestController extends Controller
             'document_type_id' => 'required|exists:document_types,id',
             'document_name' => 'required|string|max:255',
             'description' => 'required|string',
-            'document' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx'
+            'document' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
+            'created_at' => 'required|date', // Validación para la fecha de creación personalizada
         ]);
 
         try {
@@ -405,14 +411,26 @@ class DocumentRequestController extends Controller
                 $validated['document_path'] = $path;
             }
 
-            $documentRequest->update($validated);
+            // Primero actualizamos los campos normales
+            $documentRequest->update([
+                'request_type' => $validated['request_type'],
+                'document_type_id' => $validated['document_type_id'],
+                'document_name' => $validated['document_name'],
+                'description' => $validated['description'],
+                'document_path' => $validated['document_path'] ?? $documentRequest->document_path,
+            ]);
+
+            // Actualizamos la fecha de creación aparte, ya que no está en $fillable
+            $documentRequest->created_at = $validated['created_at'];
+            $documentRequest->save();
 
             DB::commit();
 
             Log::info('Solicitud de documento actualizada exitosamente', [
                 'document_request_id' => $documentRequest->id,
                 'user_id' => Auth::id(),
-                'new_status' => $documentRequest->status
+                'new_status' => $documentRequest->status,
+                'created_at' => $validated['created_at'] // Registramos la fecha actualizada en los logs
             ]);
 
             $redirectRoute = match ($documentRequest->status) {

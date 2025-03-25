@@ -99,6 +99,18 @@
                                        value="{{ old('document_name') }}"
                                        class="py-2 px-3 block w-full border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400">
                             </div>
+                            <!-- Fecha de Creación -->
+                            <div class="space-y-2">
+                                <label for="created_at" class="block text-sm font-medium text-gray-700 dark:text-neutral-300">
+                                    Fecha de Vigencia <span class="text-red-500">*</span>
+                                </label>
+                                <input type="datetime-local" 
+                                    id="created_at" 
+                                    name="created_at" 
+                                    value="{{ old('created_at', date('Y-m-d\TH:i')) }}"
+                                    class="py-2 px-3 block w-full border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
+                                    required>
+                            </div>
 
                             <!-- Descripción -->
                             <div class="space-y-2 md:col-span-2">

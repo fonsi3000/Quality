@@ -162,7 +162,7 @@
                                 <th scope="col" class="px-4 py-3 text-start">
                                     <div class="flex items-center gap-x-2">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
-                                            Fecha Publicación
+                                            Fecha de Vigencia
                                         </span>
                                     </div>
                                 </th>
@@ -204,7 +204,7 @@
                                     </td>
                                     <td class="px-4 py-4">
                                         <span class="text-sm text-gray-800 dark:text-neutral-200">
-                                            {{ $request->updated_at->format('d/m/Y H:i') }}
+                                            {{ $request->created_at->format('d/m/Y H:i') }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-4 text-end sticky right-0 bg-white dark:bg-neutral-900">
