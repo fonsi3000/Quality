@@ -399,28 +399,51 @@ class DocumentRequestController extends Controller
         try {
             DB::beginTransaction();
 
+            // Validar si puede ser editado normalmente
             if (!$documentRequest->canBeEdited()) {
-                throw new \Exception('Esta solicitud no puede ser editada en su estado actual.');
-            }
-
-            if ($request->hasFile('document')) {
-                if ($documentRequest->document_path) {
-                    Storage::disk('public')->delete($documentRequest->document_path);
+                // Si está publicado, solo un admin puede editarlo
+                if (!$documentRequest->isPublicado() || !Auth::user()->hasRole('admin')) {
+                    throw new \Exception('Esta solicitud no puede ser editada en su estado actual.');
                 }
-                $path = $this->handleFileStorage($request->file('document'));
-                $validated['document_path'] = $path;
             }
 
-            // Primero actualizamos los campos normales
+            // Procesamiento del archivo cargado
+            if ($request->hasFile('document')) {
+                $newFilePath = $this->handleFileStorage($request->file('document'));
+
+                if ($documentRequest->isPublicado()) {
+                    // Solo el rol admin puede reemplazar el documento publicado
+                    if (!Auth::user()->hasRole('admin')) {
+                        throw new \Exception('Solo los administradores pueden actualizar documentos publicados.');
+                    }
+
+                    // Eliminar el archivo final anterior si existe
+                    if ($documentRequest->final_document_path) {
+                        Storage::disk('public')->delete($documentRequest->final_document_path);
+                    }
+
+                    $validated['final_document_path'] = $newFilePath;
+                } else {
+                    // Eliminar el archivo de documento base si existe
+                    if ($documentRequest->document_path) {
+                        Storage::disk('public')->delete($documentRequest->document_path);
+                    }
+
+                    $validated['document_path'] = $newFilePath;
+                }
+            }
+
+            // Actualización general de campos
             $documentRequest->update([
                 'request_type' => $validated['request_type'],
                 'document_type_id' => $validated['document_type_id'],
                 'document_name' => $validated['document_name'],
                 'description' => $validated['description'],
                 'document_path' => $validated['document_path'] ?? $documentRequest->document_path,
+                'final_document_path' => $validated['final_document_path'] ?? $documentRequest->final_document_path,
             ]);
 
-            // Actualizamos la fecha de creación aparte, ya que no está en $fillable
+            // Actualizar la fecha de creación (no está en $fillable)
             $documentRequest->created_at = $validated['created_at'];
             $documentRequest->save();
 
@@ -430,7 +453,8 @@ class DocumentRequestController extends Controller
                 'document_request_id' => $documentRequest->id,
                 'user_id' => Auth::id(),
                 'new_status' => $documentRequest->status,
-                'created_at' => $validated['created_at'] // Registramos la fecha actualizada en los logs
+                'created_at' => $validated['created_at'],
+                'final_document_updated' => isset($validated['final_document_path']) ? true : false
             ]);
 
             $redirectRoute = match ($documentRequest->status) {
@@ -445,8 +469,8 @@ class DocumentRequestController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            if (isset($path) && Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
+            if (isset($newFilePath) && Storage::disk('public')->exists($newFilePath)) {
+                Storage::disk('public')->delete($newFilePath);
             }
 
             Log::error('Error al actualizar DocumentRequest', [
@@ -461,6 +485,7 @@ class DocumentRequestController extends Controller
                 ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
         }
     }
+
 
     public function destroy(DocumentRequest $documentRequest, Request $request)
     {
@@ -523,14 +548,19 @@ class DocumentRequestController extends Controller
     public function downloadDocument(DocumentRequest $documentRequest)
     {
         try {
-            if (!$documentRequest->document_path || !Storage::disk('public')->exists($documentRequest->document_path)) {
+            if (
+                !$documentRequest->document_path ||
+                !Storage::disk('public')->exists($documentRequest->document_path)
+            ) {
                 throw new \Exception(self::MESSAGE_ERROR_FILE);
             }
 
-            return Storage::disk('public')->download(
-                $documentRequest->document_path,
-                $documentRequest->document_name . '.' . pathinfo($documentRequest->document_path, PATHINFO_EXTENSION)
-            );
+            // Limpiar el nombre del documento para evitar caracteres especiales
+            $safeName = Str::slug(pathinfo($documentRequest->document_name, PATHINFO_FILENAME));
+            $extension = pathinfo($documentRequest->document_path, PATHINFO_EXTENSION);
+            $filename = $safeName . '.' . $extension;
+
+            return Storage::disk('public')->download($documentRequest->document_path, $filename);
         } catch (\Exception $e) {
             Log::error('Error al descargar documento', [
                 'error' => $e->getMessage(),
@@ -543,6 +573,7 @@ class DocumentRequestController extends Controller
                 ->with('error', 'Error al descargar el documento: ' . $e->getMessage());
         }
     }
+
 
     public function previewDocument(DocumentRequest $documentRequest)
     {
@@ -582,11 +613,11 @@ class DocumentRequestController extends Controller
                 throw new \Exception(self::MESSAGE_ERROR_FILE);
             }
 
-            return Storage::disk('public')->download(
-                $documentRequest->final_document_path,
-                'final_' . $documentRequest->document_name . '.' .
-                    pathinfo($documentRequest->final_document_path, PATHINFO_EXTENSION)
-            );
+            $extension = pathinfo($documentRequest->final_document_path, PATHINFO_EXTENSION);
+            $originalName = pathinfo($documentRequest->document_name, PATHINFO_FILENAME);
+            $filename = $originalName . '.' . $extension;
+
+            return Storage::disk('public')->download($documentRequest->final_document_path, $filename);
         } catch (\Exception $e) {
             Log::error('Error al descargar documento final', [
                 'error' => $e->getMessage(),
@@ -746,7 +777,7 @@ class DocumentRequestController extends Controller
                 ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
         }
     }
-
+    // Quiero que cuando edite un document que este en estado 
     public function assign(Request $request, DocumentRequest $documentRequest)
     {
         $validated = $request->validate([
