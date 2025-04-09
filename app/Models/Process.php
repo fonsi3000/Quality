@@ -12,38 +12,69 @@ class Process extends Model
     protected $fillable = [
         'name',
         'active',
-        'leader_id'  // Añadido el nuevo campo
+        'leader_id',
+        'second_leader_id',
     ];
 
     protected $casts = [
-        'active' => 'boolean'
+        'active' => 'boolean',
     ];
 
-    // Relación existente con usuarios del proceso
+    /*
+    |--------------------------------------------------------------------------
+    | Relaciones
+    |--------------------------------------------------------------------------
+    */
+
+    // Usuarios asignados al proceso
     public function users()
     {
         return $this->hasMany(User::class);
     }
 
-    // Nueva relación con el líder
+    // Líder principal
     public function leader()
     {
         return $this->belongsTo(User::class, 'leader_id');
     }
 
-    // Método para verificar si un usuario es el líder
+    // Segundo líder
+    public function secondLeader()
+    {
+        return $this->belongsTo(User::class, 'second_leader_id');
+    }
+
+    // Solicitudes de documentos asociadas al proceso
+    public function documentRequests()
+    {
+        return $this->hasMany(DocumentRequest::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Métodos de utilidad
+    |--------------------------------------------------------------------------
+    */
+
+    // Verificar si un usuario es líder principal
     public function isLeader(User $user): bool
     {
         return $this->leader_id === $user->id;
     }
 
-    // Método para verificar si el proceso tiene líder
-    public function hasLeader(): bool
+    // Verificar si un usuario es segundo líder
+    public function isSecondLeader(User $user): bool
     {
-        return !is_null($this->leader_id);
+        return $this->second_leader_id === $user->id;
     }
 
-    // Método para asignar un líder
+    // Verificar si el proceso tiene al menos un líder
+    public function hasAnyLeader(): bool
+    {
+        return !is_null($this->leader_id) || !is_null($this->second_leader_id);
+    }
+
+    // Asignar líder principal
     public function assignLeader(User $user): bool
     {
         if (!$user->hasRole('leader')) {
@@ -54,28 +85,52 @@ class Process extends Model
         return $this->save();
     }
 
-    // Método para remover el líder
+    // Asignar segundo líder
+    public function assignSecondLeader(User $user): bool
+    {
+        if (!$user->hasRole('leader')) {
+            return false;
+        }
+
+        $this->second_leader_id = $user->id;
+        return $this->save();
+    }
+
+    // Remover líder principal
     public function removeLeader(): bool
     {
         $this->leader_id = null;
         return $this->save();
     }
 
-    // Scope para procesos activos
+    // Remover segundo líder
+    public function removeSecondLeader(): bool
+    {
+        $this->second_leader_id = null;
+        return $this->save();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes 
+    |--------------------------------------------------------------------------
+    */
+
+    // Solo procesos activos
     public function scopeActive($query)
     {
         return $query->where('active', true);
     }
 
-    // Scope para procesos con líder
-    public function scopeWithLeader($query)
+    // Procesos con al menos un líder
+    public function scopeWithAnyLeader($query)
     {
-        return $query->whereNotNull('leader_id');
+        return $query->whereNotNull('leader_id')->orWhereNotNull('second_leader_id');
     }
 
-    // Scope para procesos sin líder
-    public function scopeWithoutLeader($query)
+    // Procesos sin ningún líder
+    public function scopeWithoutLeaders($query)
     {
-        return $query->whereNull('leader_id');
+        return $query->whereNull('leader_id')->whereNull('second_leader_id');
     }
 }

@@ -159,4 +159,10 @@ Route::middleware('auth')->group(function () {
         ->name('processes.leader-info');
     Route::put('/processes/{process}/remove-leader', [ProcessController::class, 'removeLeader'])
         ->name('processes.remove-leader');
+
+    // Nuevas rutas para la gestión del segundo líder
+    Route::put('/processes/{process}/assign-second-leader', [ProcessController::class, 'assignSecondLeader'])
+        ->name('processes.assign-second-leader');
+    Route::put('/processes/{process}/remove-second-leader', [ProcessController::class, 'removeSecondLeader'])
+        ->name('processes.remove-second-leader');
 });

@@ -5,9 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\Process;
 
 class User extends Authenticatable
 {
@@ -38,7 +36,11 @@ class User extends Authenticatable
         'updated_at' => 'datetime'
     ];
 
-    // Relaciones organizacionales
+    /*
+    |--------------------------------------------------------------------------
+    | Relaciones organizacionales
+    |--------------------------------------------------------------------------
+    */
     public function unit()
     {
         return $this->belongsTo(Unit::class);
@@ -54,7 +56,11 @@ class User extends Authenticatable
         return $this->belongsTo(Position::class);
     }
 
-    // Relaciones con documentos
+    /*
+    |--------------------------------------------------------------------------
+    | Relaciones con documentos
+    |--------------------------------------------------------------------------
+    */
     public function documentRequests()
     {
         return $this->hasMany(DocumentRequest::class);
@@ -65,7 +71,29 @@ class User extends Authenticatable
         return $this->hasMany(DocumentRequest::class, 'responsible_id');
     }
 
-    // Scopes
+    /*
+    |--------------------------------------------------------------------------
+    | Relaciones de liderazgo
+    |--------------------------------------------------------------------------
+    */
+
+    // Procesos donde es líder principal
+    public function ledProcesses()
+    {
+        return $this->hasMany(Process::class, 'leader_id');
+    }
+
+    // Procesos donde es segundo líder
+    public function secondLedProcesses()
+    {
+        return $this->hasMany(Process::class, 'second_leader_id');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
     public function scopeActive($query)
     {
         return $query->where('active', true);
@@ -77,6 +105,12 @@ class User extends Authenticatable
             ->orWhere('email', 'like', "%{$search}%")
             ->orWhere('department', 'like', "%{$search}%");
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Métodos personalizados
+    |--------------------------------------------------------------------------
+    */
     public function getFriendlyRoleName()
     {
         $roleNames = [

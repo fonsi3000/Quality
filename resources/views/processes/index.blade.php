@@ -48,7 +48,6 @@
                     </div>
 
                     <!-- Filtro por estado -->
-                    <!-- Filtro por estado -->
                     <div>
                         <select name="status" 
                                 class="py-2 px-3 pe-9 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400">
@@ -120,7 +119,10 @@
                             </a>
                         </th>
                         <th scope="col" class="px-6 py-3 text-start">
-                            <span class="text-sm text-gray-500 dark:text-neutral-400">Líder</span>
+                            <span class="text-sm text-gray-500 dark:text-neutral-400">Líder Principal</span>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-start">
+                            <span class="text-sm text-gray-500 dark:text-neutral-400">Líder Secundario</span>
                         </th>
                         <th scope="col" class="px-6 py-3 text-start">
                             <span class="text-sm text-gray-500 dark:text-neutral-400">Estado</span>
@@ -163,7 +165,18 @@
                                         </span>
                                     </div>
                                 @else
-                                    <span class="text-yellow-500 dark:text-yellow-400">Sin líder asignado</span>
+                                    <span class="text-yellow-500 dark:text-yellow-400">Sin líder principal</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-neutral-400">
+                                @if($process->secondLeader)
+                                    <div class="flex items-center gap-x-2">
+                                        <span class="bg-purple-100 text-purple-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-purple-900 dark:text-purple-300">
+                                            {{ $process->secondLeader->name }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <span class="text-yellow-500 dark:text-yellow-400">Sin líder secundario</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -176,11 +189,11 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                                 <div class="flex justify-end items-center gap-2">
-                                    <!-- Botón para asignar líder -->
+                                    <!-- Botón para asignar líder principal -->
                                     <button type="button" 
-                                            onclick="openAssignLeaderModal({{ $process->id }}, '{{ $process->leader ? $process->leader->id : '' }}')"
+                                            onclick="openAssignLeaderModal({{ $process->id }}, '{{ $process->leader ? $process->leader->id : '' }}', 'primary')"
                                             class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                            title="Asignar Líder">
+                                            title="Asignar Líder Principal">
                                         <svg class="size-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                                             <circle cx="9" cy="7" r="4"/>
@@ -188,6 +201,34 @@
                                             <path d="M22 11h-6"/>
                                         </svg>
                                     </button>
+
+                                    <!-- Botón para asignar líder secundario (solo visible si hay líder principal) -->
+                                    @if($process->leader)
+                                    <button type="button" 
+                                            onclick="openAssignLeaderModal({{ $process->id }}, '{{ $process->secondLeader ? $process->secondLeader->id : '' }}', 'secondary')"
+                                            class="text-purple-500 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                                            title="Asignar Líder Secundario">
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                            <path d="M19 8v6"/>
+                                            <path d="M22 11h-6"/>
+                                        </svg>
+                                    </button>
+                                    @else
+                                    <!-- Botón deshabilitado cuando no hay líder principal -->
+                                    <button type="button" 
+                                            disabled
+                                            class="text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                                            title="Debe asignar un líder principal primero">
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                            <path d="M19 8v6"/>
+                                            <path d="M22 11h-6"/>
+                                        </svg>
+                                    </button>
+                                    @endif
 
                                     <!-- Botón editar -->
                                     <a href="{{ route('processes.edit', $process) }}" 
@@ -220,7 +261,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center dark:text-neutral-400">
+                            <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center dark:text-neutral-400">
                                 No se encontraron procesos
                             </td>
                         </tr>
@@ -237,12 +278,13 @@
         @endif
     </div>
 </div>
+
 <!-- Modal para asignar líder -->
 <div id="assignLeaderModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-[480px] shadow-lg rounded-md bg-white dark:bg-neutral-800">
         <div class="mt-3">
             <div class="flex justify-between items-center pb-3">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                <h3 id="leaderModalTitle" class="text-lg font-medium text-gray-900 dark:text-white">
                     Asignar Líder al Proceso
                 </h3>
                 <button onclick="closeAssignLeaderModal()" class="text-gray-400 hover:text-gray-500">
@@ -255,6 +297,9 @@
             <form id="assignLeaderForm" method="POST" class="mt-4">
                 @csrf
                 @method('PUT')
+                
+                <!-- Campo oculto para indicar el tipo de líder -->
+                <input type="hidden" id="leaderType" name="leader_type" value="primary">
                 
                 <!-- Campo de búsqueda -->
                 <div class="mb-4">
@@ -308,8 +353,7 @@
 
 @push('scripts')
     <script>
-    // Funciones existentes del modal...
-
+    // Funciones para el manejo del modal
     function filterUsers(searchTerm) {
         const usersList = document.getElementById('usersList');
         const noResults = document.getElementById('noResults');
@@ -332,12 +376,24 @@
         noResults.classList.toggle('hidden', hasResults);
     }
 
-    function openAssignLeaderModal(processId, currentLeaderId = '') {
+    function openAssignLeaderModal(processId, currentLeaderId = '', leaderType = 'primary') {
         const modal = document.getElementById('assignLeaderModal');
         const form = document.getElementById('assignLeaderForm');
         const searchInput = document.getElementById('searchUser');
+        const leaderTypeInput = document.getElementById('leaderType');
+        const modalTitle = document.getElementById('leaderModalTitle');
         
-        form.action = `/processes/${processId}/assign-leader`;
+        // Actualizar título del modal según el tipo de líder
+        if (leaderType === 'primary') {
+            modalTitle.textContent = 'Asignar Líder Principal al Proceso';
+            form.action = `/processes/${processId}/assign-leader`;
+        } else {
+            modalTitle.textContent = 'Asignar Líder Secundario al Proceso';
+            form.action = `/processes/${processId}/assign-second-leader`;
+        }
+        
+        // Guardar el tipo de líder en el campo oculto
+        leaderTypeInput.value = leaderType;
         
         // Limpiar búsqueda y mostrar todos los usuarios
         searchInput.value = '';
@@ -347,6 +403,10 @@
         if (currentLeaderId) {
             const radio = form.querySelector(`input[value="${currentLeaderId}"]`);
             if (radio) radio.checked = true;
+        } else {
+            // Desmarcar todos los radios si no hay líder actual
+            const radios = form.querySelectorAll('input[type="radio"]');
+            radios.forEach(radio => radio.checked = false);
         }
         
         modal.classList.remove('hidden');
