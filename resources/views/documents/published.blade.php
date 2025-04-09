@@ -318,7 +318,7 @@
                         <div class="bg-gray-50 rounded-xl p-6 dark:bg-neutral-700 border border-gray-100 dark:border-neutral-600">
                             <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                                 <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                 </svg>
                                 Responsables
                             </h4>
@@ -331,23 +331,32 @@
                                     </span>
                                 </div>
 
-                                <!-- Responsable -->
+                                <!-- Elaborado por -->
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Responsable:</span>
-                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                        {{ $request->responsible->name ?? 'No asignado' }}
-                                    </span>
-                                </div>
-
-                                <!-- Agente Asignado -->
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Agente Asignado:</span>
+                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Elaborado por:</span>
                                     <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $request->assignedAgent?->name ?? 'No asignado' }}
                                     </span>
                                 </div>
+
+                                <!-- Revisado por -->
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Revisado por:</span>
+                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                        {{ $request->responsible?->name ?? 'No asignado' }}
+                                    </span>
+                                </div>
+
+                                <!-- Aprobado por -->
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado por:</span>
+                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                        {{ $request->process?->leader?->name ?? 'No asignado' }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
+
 
                         <!-- Fechas -->
                         <div class="bg-gray-50 rounded-xl p-6 dark:bg-neutral-700 border border-gray-100 dark:border-neutral-600">

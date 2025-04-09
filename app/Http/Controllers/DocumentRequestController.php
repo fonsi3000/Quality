@@ -180,7 +180,7 @@ class DocumentRequestController extends Controller
         // Validación actual...
         $validated = $request->validate([
             'request_type' => 'required|in:create,modify,obsolete',
-            'document' => 'required|file|max:20480|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
+            'document' => 'required|file|max:102400|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
             'description' => 'required|string',
             'document_type_id' => $request->request_type === 'create' ? 'required|exists:document_types,id' : 'nullable',
             'document_name' => $request->request_type === 'create' ? 'required|string|max:255' : 'nullable',
@@ -674,7 +674,7 @@ class DocumentRequestController extends Controller
     public function attachFinalDocument(Request $request, DocumentRequest $documentRequest)
     {
         $validated = $request->validate([
-            'final_document' => 'required|file|max:20480|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
+            'final_document' => 'required|file|max:102400|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
             'observations' => 'nullable|string',
         ]);
 
@@ -1911,7 +1911,10 @@ class DocumentRequestController extends Controller
     {
         try {
             $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent', 'process'])
-                ->where('status', DocumentRequest::STATUS_OBSOLETO);
+                ->whereIn('status', [
+                    DocumentRequest::STATUS_OBSOLETO,
+                    DocumentRequest::STATUS_PUBLICADO
+                ]);
 
             // Filtrar por proceso si el usuario no es admin
             if (!Auth::user()->hasRole('admin')) {

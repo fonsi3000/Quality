@@ -142,7 +142,7 @@
                                                     <span class="font-semibold">Haga clic para cargar</span> o arrastre y suelte
                                                 </p>
                                                 <p class="text-xs text-gray-500 dark:text-neutral-400 mt-1">
-                                                    PDF, DOCX, DOC, XLS, XLSX (Máx. 20MB)
+                                                    PDF, DOCX, DOC, XLS, XLSX (Máx. 100MB)
                                                 </p>
                                             </div>
                                         </div>

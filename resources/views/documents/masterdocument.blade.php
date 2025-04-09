@@ -115,13 +115,6 @@
                                 <th scope="col" class="px-4 py-3 text-start">
                                     <div class="flex items-center gap-x-2">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
-                                            Código
-                                        </span>
-                                    </div>
-                                </th>
-                                <th scope="col" class="px-4 py-3 text-start">
-                                    <div class="flex items-center gap-x-2">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
                                             Nombre del Documento
                                         </span>
                                     </div>
@@ -165,11 +158,11 @@
                         <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
                             @foreach($documentRequests as $request)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                                    <td class="px-4 py-4">
+                                    {{-- <td class="px-4 py-4">
                                         <span class="text-sm text-gray-800 dark:text-neutral-200">
                                             {{ $request->document_code }}
                                         </span>
-                                    </td>
+                                    </td> --}}
                                     <td class="px-4 py-4">
                                         <div class="flex flex-col">
                                             <span class="text-sm font-medium text-gray-800 dark:text-neutral-200">
@@ -334,19 +327,27 @@
                                         </span>
                                     </div>
 
-                                    <!-- Responsable -->
+                                    <!-- Elaborado por -->
                                     <div class="flex items-center justify-between">
-                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Responsable:</span>
+                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Elaborado por:</span>
                                         <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                            {{ $request->responsible->name ?? 'No asignado' }}
+                                            {{ $request->assignedAgent?->name ?? 'No asignado' }}
                                         </span>
                                     </div>
 
-                                    <!-- Agente Asignado -->
+                                    <!-- Revisado por -->
                                     <div class="flex items-center justify-between">
-                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Agente Asignado:</span>
+                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Revisado por:</span>
                                         <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                            {{ $request->assignedAgent?->name ?? 'No asignado' }}
+                                            {{ $request->responsible?->name ?? 'No asignado' }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Aprobado por -->
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado por:</span>
+                                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            {{ $request->process?->leader?->name ?? 'No asignado' }}
                                         </span>
                                     </div>
                                 </div>
