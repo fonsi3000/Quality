@@ -371,6 +371,14 @@ class DocumentRequestController extends Controller
                 throw new \Exception('Esta solicitud no puede ser editada en su estado actual.');
             }
 
+            // Verificar si el usuario es admin o el creador de la solicitud
+            if (
+                !Auth::user()->hasRole('admin') &&
+                Auth::id() !== $documentRequest->user_id
+            ) {
+                abort(403, 'No tienes permiso para editar esta solicitud.');
+            }
+
             $documentTypes = DocumentType::where('is_active', true)->get();
             $users = User::where('active', true)->get();
 
@@ -384,6 +392,7 @@ class DocumentRequestController extends Controller
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
+
 
     public function update(Request $request, DocumentRequest $documentRequest)
     {

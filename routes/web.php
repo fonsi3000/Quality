@@ -101,7 +101,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Rutas protegidas para administradores 
-    Route::middleware(['auth', 'can:admin.only'])->group(function () {
+    Route::middleware('auth')->group(function () {
         Route::get('documents/requests/{documentRequest}/edit', [DocumentRequestController::class, 'edit'])
             ->name('documents.requests.edit');
 
