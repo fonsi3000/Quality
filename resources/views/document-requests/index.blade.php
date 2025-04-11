@@ -1,3 +1,4 @@
+```blade
 @extends('layouts.app')
 
 @section('title', 'Solicitudes de Documentos')
@@ -215,6 +216,9 @@
                                                         @case('pendiente_lider')
                                                             bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300
                                                             @break
+                                                        @case('pendiente_segundo_lider')
+                                                            bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300
+                                                            @break
                                                         @case('rechazado_lider')
                                                             bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300
                                                             @break
@@ -237,7 +241,7 @@
                                                             bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300
                                                     @endswitch">
                                                         {{ $statusLabels[$request->status] ?? $request->status }}
-                                                    </span
+                                                    </span>
                                                 </td>
                                                 <td class="hidden sm:table-cell px-4 py-4">
                                                     <div class="text-sm text-gray-800 dark:text-neutral-200">
@@ -255,7 +259,7 @@
                                                                 <circle cx="12" cy="12" r="3"/>
                                                             </svg>
                                                         </button>
-
+                                                
                                                         <a href="{{ route('documents.requests.download', $request->id) }}" 
                                                            class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                                                             <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -264,7 +268,7 @@
                                                                 <line x1="12" x2="12" y1="15" y2="3"/>
                                                             </svg>
                                                         </a>
-
+                                                
                                                         @if($request->canBeEdited())
                                                         <a href="{{ route('documents.requests.edit', $request->id) }}" 
                                                            class="text-yellow-500 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300">
@@ -274,10 +278,11 @@
                                                             </svg>
                                                         </a>
                                                         @endif
+                                                        
                                                         @can('admin.only')
                                                         <form action="{{ route('documents.requests.destroy', $request->id) }}" 
                                                               method="POST" 
-                                                              class="inline"
+                                                              class="flex items-center m-0 p-0"
                                                               onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">
                                                             @csrf
                                                             @method('DELETE')
@@ -367,7 +372,7 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ match($request->status) {
                                         'publicado' => 'bg-green-100 text-green-800',
                                         'rechazado', 'rechazado_lider' => 'bg-red-100 text-red-800',
-                                        'sin_aprobar', 'pendiente_lider' => 'bg-yellow-100 text-yellow-800',
+                                        'sin_aprobar', 'pendiente_lider', 'pendiente_segundo_lider' => 'bg-yellow-100 text-yellow-800',
                                         'en_elaboracion' => 'bg-blue-100 text-blue-800',
                                         'revision' => 'bg-purple-100 text-purple-800',
                                         'obsoleto' => 'bg-gray-100 text-gray-800',
@@ -483,6 +488,16 @@
                                     </p>
                                 </div>
                                 @endif
+                                @if($request->second_leader_observations)
+                                <div>
+                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-2">
+                                        Observaciones del Segundo Líder:
+                                    </span>
+                                    <p class="text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-neutral-800 p-3 rounded-lg">
+                                        {{ $request->second_leader_observations }}
+                                    </p>
+                                </div>
+                                @endif
                             </div>
                         </div>
 
@@ -512,6 +527,14 @@
                                     <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobación del Líder:</span>
                                     <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $request->leader_approval_date->format('d/m/Y H:i') }}
+                                    </span>
+                                </div>
+                                @endif
+                                @if($request->second_leader_approval_date)
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobación del Segundo Líder:</span>
+                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                        {{ $request->second_leader_approval_date->format('d/m/Y H:i') }}
                                     </span>
                                 </div>
                                 @endif
@@ -749,6 +772,7 @@
     </div>
 </div>
 
+```blade
 <!-- Modal de Asignación -->
 <div id="assign-modal-{{ $request->id }}" class="hs-overlay hidden w-full h-full fixed top-0 start-0 z-[70] overflow-x-hidden overflow-y-auto">
     <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all w-[95%] sm:max-w-lg sm:w-full m-3 mx-auto min-h-[calc(100%-3.5rem)] flex items-center">

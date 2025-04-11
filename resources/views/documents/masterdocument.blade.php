@@ -606,70 +606,135 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('filter-form');
-    const searchInput = document.getElementById('search');
-    const typeFilter = document.getElementById('document_type_id');
-    const dateFromInput = document.getElementById('date_from');
-    const dateToInput = document.getElementById('date_to');
-
-    // Función simple para actualizar la página con los filtros
-    function updateFilters() {
-        // Construir la URL base
-        let url = new URL(window.location.href);
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('filter-form');
+        const searchInput = document.getElementById('search');
+        const typeFilter = document.getElementById('document_type_id');
+        const dateFromInput = document.getElementById('date_from');
+        const dateToInput = document.getElementById('date_to');
         
-        // Actualizar parámetros
-        let formData = new FormData(form);
-        formData.forEach((value, key) => {
-            if (value) {
-                url.searchParams.set(key, value);
-            } else {
-                url.searchParams.delete(key);
+        // Guardar el valor original del campo de búsqueda
+        const originalSearchValue = searchInput ? searchInput.value : '';
+        let isTyping = false;
+
+        // Función simple para actualizar la página con los filtros
+        function updateFilters(fromSearch = false) {
+            // Si es desde el campo de búsqueda y el usuario aún está escribiendo, no hacer nada
+            if (fromSearch && isTyping) {
+                return;
             }
-        });
+            
+            // Construir la URL base
+            let url = new URL(window.location.href);
+            
+            // Actualizar parámetros
+            let formData = new FormData(form);
+            formData.forEach((value, key) => {
+                if (value) {
+                    url.searchParams.set(key, value);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            });
+            
+            // Si viene desde el campo de búsqueda, guardar el estado
+            if (fromSearch && searchInput) {
+                sessionStorage.setItem('searchValue', searchInput.value);
+                sessionStorage.setItem('cursorPosition', searchInput.selectionStart || 0);
+                sessionStorage.setItem('isSearching', 'true');
+            }
+            
+            // Redireccionar con los nuevos parámetros
+            window.location.href = url.toString();
+        }
 
-        // Redireccionar con los nuevos parámetros
-        window.location.href = url.toString();
-    }
+        // Event listeners para los filtros
+        if (typeFilter) {
+            typeFilter.addEventListener('change', function(e) {
+                e.preventDefault();
+                updateFilters(false);
+            });
+        }
 
-    // Event listeners para los filtros
-    if (typeFilter) {
-        typeFilter.addEventListener('change', function(e) {
-            e.preventDefault();
-            updateFilters();
-        });
-    }
+        if (dateFromInput) {
+            dateFromInput.addEventListener('change', function(e) {
+                e.preventDefault();
+                updateFilters(false);
+            });
+        }
 
-    if (dateFromInput) {
-        dateFromInput.addEventListener('change', function(e) {
-            e.preventDefault();
-            updateFilters();
-        });
-    }
+        if (dateToInput) {
+            dateToInput.addEventListener('change', function(e) {
+                e.preventDefault();
+                updateFilters(false);
+            });
+        }
 
-    if (dateToInput) {
-        dateToInput.addEventListener('change', function(e) {
-            e.preventDefault();
-            updateFilters();
-        });
-    }
+        // Mejorar el debounce para la búsqueda
+        let timeout = null;
+        if (searchInput) {
+            // Detectar cuando el usuario está escribiendo
+            searchInput.addEventListener('focus', function() {
+                isTyping = true;
+            });
+            
+            searchInput.addEventListener('blur', function() {
+                isTyping = false;
+                
+                // Si hay un cambio pendiente, aplicarlo
+                if (timeout && searchInput.value !== originalSearchValue) {
+                    clearTimeout(timeout);
+                    updateFilters(true);
+                }
+            });
+            
+            searchInput.addEventListener('input', function(e) {
+                clearTimeout(timeout);
+                
+                // Solo actualizar cuando el usuario haya dejado de escribir por un tiempo
+                timeout = setTimeout(function() {
+                    if (searchInput.value.length > 2 || searchInput.value.length === 0) {
+                        updateFilters(true);
+                    }
+                }, 800); // Más tiempo para escribir
+            });
+            
+            // Manejar la tecla Enter para buscar inmediatamente
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(timeout);
+                    updateFilters(true);
+                }
+            });
+            
+            // Restaurar el estado después de la carga si estábamos buscando
+            if (sessionStorage.getItem('isSearching') === 'true') {
+                const savedValue = sessionStorage.getItem('searchValue');
+                const cursorPos = parseInt(sessionStorage.getItem('cursorPosition') || '0');
+                
+                if (savedValue) {
+                    // Enfocar y seleccionar después de un pequeño retraso
+                    setTimeout(() => {
+                        searchInput.focus();
+                        searchInput.setSelectionRange(cursorPos, cursorPos);
+                    }, 100);
+                }
+                
+                // Limpiar el estado
+                sessionStorage.removeItem('isSearching');
+                sessionStorage.removeItem('searchValue');
+                sessionStorage.removeItem('cursorPosition');
+            }
+        }
 
-    // Debounce para la búsqueda
-    let timeout = null;
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            clearTimeout(timeout);
-            timeout = setTimeout(updateFilters, 500);
-        });
-    }
-
-    // Prevenir el submit del formulario y manejar la búsqueda
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            updateFilters();
-        });
-    }
-});
+        // Prevenir el submit del formulario y manejar la búsqueda
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                updateFilters(false);
+            });
+        }
+    });
 </script>
 @endpush

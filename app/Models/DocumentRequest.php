@@ -25,6 +25,7 @@ class DocumentRequest extends Model
     const STATUS_PENDIENTE_LIDER = 'pendiente_lider';
     const STATUS_RECHAZADO_LIDER = 'rechazado_lider';
     const STATUS_OBSOLETO = 'obsoleto';
+    const STATUS_PENDIENTE_SEGUNDO_LIDER = 'pendiente_segundo_lider';
 
     // Campos que pueden ser asignados masivamente
     protected $fillable = [
@@ -43,6 +44,8 @@ class DocumentRequest extends Model
         'observations',
         'leader_observations',
         'leader_approval_date',
+        'second_leader_observations',
+        'second_leader_approval_date',
         'version',
         'process_id',
         'reference_document_id',
@@ -57,6 +60,7 @@ class DocumentRequest extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'leader_approval_date' => 'datetime',
+        'second_leader_approval_date' => 'datetime',
         'is_public' => 'boolean'
     ];
 
@@ -177,6 +181,11 @@ class DocumentRequest extends Model
         return $this->status === self::STATUS_PENDIENTE_LIDER;
     }
 
+    public function isPendingSecondLeaderApproval()
+    {
+        return $this->status === self::STATUS_PENDIENTE_SEGUNDO_LIDER;
+    }
+
     public function isRejectedByLeader()
     {
         return $this->status === self::STATUS_RECHAZADO_LIDER;
@@ -209,6 +218,7 @@ class DocumentRequest extends Model
     {
         return [
             self::STATUS_PENDIENTE_LIDER => 'Pendiente por el Líder',
+            self::STATUS_PENDIENTE_SEGUNDO_LIDER => 'Pendiente por el Segundo Líder',
             self::STATUS_RECHAZADO_LIDER => 'Rechazado por Líder',
             self::STATUS_SIN_APROBAR => 'Pendiente en Aprobacion por calidad',
             self::STATUS_EN_ELABORACION => 'En Elaboración',
@@ -263,6 +273,16 @@ class DocumentRequest extends Model
         return $user->id === $this->process->leader_id;
     }
 
+    public function canBeApprovedBySecondLeader(User $user)
+    {
+        return $user->id === $this->process->second_leader_id;
+    }
+
+    public function isUserAnyLeader(User $user)
+    {
+        return $user->id === $this->process->leader_id || $user->id === $this->process->second_leader_id;
+    }
+
     // Métodos de gestión de documentos
 
     public function hasAssignedAgent()
@@ -308,14 +328,27 @@ class DocumentRequest extends Model
     {
         return $this->leader_approval_date;
     }
+
+    public function getSecondLeaderObservations()
+    {
+        return $this->second_leader_observations;
+    }
+
+    public function getSecondLeaderApprovalDate()
+    {
+        return $this->second_leader_approval_date;
+    }
+
     public function isObsoleto()
     {
         return $this->status === self::STATUS_OBSOLETO;
     }
+
     public function isObsoleteRequest()
     {
         return $this->request_type === self::REQUEST_TYPE_OBSOLETE;
     }
+
     public function setInitialStatus()
     {
         if ($this->request_type === self::REQUEST_TYPE_CREATE) {
@@ -325,6 +358,36 @@ class DocumentRequest extends Model
             $this->status = self::STATUS_PENDIENTE_LIDER;
         }
         return $this;
+    }
+
+    /**
+     * Determina el siguiente estado después de la aprobación del líder principal
+     */
+    public function getNextStateAfterLeaderApproval()
+    {
+        // Si hay segundo líder, ir a pendiente de segundo líder
+        if ($this->process && $this->process->second_leader_id) {
+            return self::STATUS_PENDIENTE_SEGUNDO_LIDER;
+        }
+
+        // Si no hay segundo líder, determinar por tipo de solicitud
+        if ($this->isCreateRequest()) {
+            return self::STATUS_PUBLICADO;
+        } else {
+            return self::STATUS_SIN_APROBAR;
+        }
+    }
+
+    /**
+     * Determina el siguiente estado después de la aprobación del segundo líder
+     */
+    public function getNextStateAfterSecondLeaderApproval()
+    {
+        if ($this->isCreateRequest()) {
+            return self::STATUS_PUBLICADO;
+        } else {
+            return self::STATUS_SIN_APROBAR;
+        }
     }
 
     /**

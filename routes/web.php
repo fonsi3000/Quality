@@ -61,6 +61,10 @@ Route::middleware('auth')->group(function () {
         Route::put('requests/{documentRequest}/leader-reject', [DocumentRequestController::class, 'leaderReject'])
             ->name('requests.leader-reject');
 
+        // Nueva ruta para la aprobación del segundo líder
+        Route::put('requests/{documentRequest}/second-leader-approve', [DocumentRequestController::class, 'secondLeaderApprove'])
+            ->name('requests.second-leader-approve');
+
         // Rutas para manejo de documentos (descargas y previsualizaciones)
         Route::get('requests/{documentRequest}/download', [DocumentRequestController::class, 'downloadDocument'])
             ->name('requests.download');

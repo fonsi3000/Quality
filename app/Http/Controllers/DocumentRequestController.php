@@ -25,12 +25,18 @@ class DocumentRequestController extends Controller
     private const MESSAGE_ERROR_GENERIC = 'Ha ocurrido un error. Por favor, intente nuevamente.';
     private const MESSAGE_SUCCESS_FINAL_DOCUMENT = 'Documento final adjuntado exitosamente.';
 
-    // Nuevas constantes para mensajes de líder
+    // Constantes para mensajes de líder
     private const MESSAGE_SUCCESS_LEADER_APPROVE = 'Solicitud aprobada por el líder exitosamente.';
     private const MESSAGE_SUCCESS_LEADER_REJECT = 'Solicitud rechazada por el líder.';
     private const MESSAGE_ERROR_LEADER_PERMISSION = 'No tiene permisos de líder para realizar esta acción.';
     private const MESSAGE_ERROR_LEADER_PROCESS = 'El proceso no tiene un líder asignado.';
     private const MESSAGE_ERROR_INVALID_STATUS = 'Estado no válido para esta acción.';
+
+    // Nuevas constantes para el segundo líder
+    private const MESSAGE_SUCCESS_SECOND_LEADER_APPROVE = 'Solicitud aprobada por el segundo líder exitosamente.';
+    private const MESSAGE_SUCCESS_SECOND_LEADER_REJECT = 'Solicitud rechazada por el segundo líder.';
+    private const MESSAGE_PENDING_SECOND_LEADER = 'Solicitud aprobada por el líder principal. Ahora está pendiente de aprobación por el segundo líder.';
+    private const MESSAGE_ERROR_SECOND_LEADER_PERMISSION = 'No tiene permisos de segundo líder para realizar esta acción.';
 
     public function index(Request $request)
     {
@@ -98,6 +104,7 @@ class DocumentRequestController extends Controller
             // Definir clases de estados
             $statusClasses = [
                 DocumentRequest::STATUS_PENDIENTE_LIDER => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+                DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
                 DocumentRequest::STATUS_RECHAZADO_LIDER => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
                 DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
                 DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -260,8 +267,10 @@ class DocumentRequestController extends Controller
             }
 
             // Crear el documento y establecer el estado inicial usando el método del modelo
+            // El método setInitialStatus() asignará STATUS_SIN_APROBAR para solicitudes de tipo 'create'
+            // y STATUS_PENDIENTE_LIDER para solicitudes de tipo 'modify' u 'obsolete'
             $documentRequest = new DocumentRequest($documentData);
-            $documentRequest->setInitialStatus(); // Aplicamos la lógica del modelo
+            $documentRequest->setInitialStatus();
 
             // Asignamos la fecha de creación personalizada
             $documentRequest->created_at = $validated['created_at'];
@@ -325,8 +334,11 @@ class DocumentRequestController extends Controller
                         'description' => $documentRequest->description,
                         'observations' => $documentRequest->observations,
                         'leader_observations' => $documentRequest->leader_observations,
+                        'second_leader_observations' => $documentRequest->second_leader_observations,
                         'leader_approval_date' => $documentRequest->leader_approval_date ?
                             $documentRequest->leader_approval_date->format('d/m/Y H:i') : null,
+                        'second_leader_approval_date' => $documentRequest->second_leader_approval_date ?
+                            $documentRequest->second_leader_approval_date->format('d/m/Y H:i') : null,
                         'user' => [
                             'id' => $documentRequest->user->id,
                             'name' => $documentRequest->user->name
@@ -469,6 +481,7 @@ class DocumentRequestController extends Controller
             $redirectRoute = match ($documentRequest->status) {
                 DocumentRequest::STATUS_PUBLICADO => 'documents.published',
                 DocumentRequest::STATUS_PENDIENTE_LIDER => 'documents.pending-leader',
+                DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER => 'documents.pending-leader',
                 default => 'documents.requests.index'
             };
 
@@ -532,6 +545,7 @@ class DocumentRequestController extends Controller
             $redirectRoute = match ($documentRequest->status) {
                 DocumentRequest::STATUS_PUBLICADO => 'documents.published',
                 DocumentRequest::STATUS_PENDIENTE_LIDER => 'documents.pending-leader',
+                DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER => 'documents.pending-leader',
                 default => 'documents.requests.index'
             };
 
@@ -1089,84 +1103,6 @@ class DocumentRequestController extends Controller
         }
     }
 
-    public function pendingLeaderApproval()
-    {
-        try {
-            // 1. Construir la consulta base con todas las relaciones necesarias
-            $query = DocumentRequest::with([
-                'user',
-                'documentType',
-                'responsible',
-                'assignedAgent',
-                'process'
-            ])->where('status', DocumentRequest::STATUS_PENDIENTE_LIDER);
-
-            // 2. Filtrar por procesos donde es líder si no es admin
-            if (!Auth::user()->hasPermissionTo('admin.only')) {
-                $userProcessesAsLeader = Process::where('leader_id', Auth::id())->pluck('id');
-
-                if ($userProcessesAsLeader->isEmpty()) {
-                    return redirect()
-                        ->route('documents.requests.index')
-                        ->with('error', 'No tiene permisos de líder en ningún proceso.');
-                }
-
-                $query->whereIn('process_id', $userProcessesAsLeader);
-            }
-
-            // 3. Obtener los documentos paginados
-            $documentRequests = $query->latest()->paginate(10);
-
-            // 4. Obtener usuarios activos con roles admin o agent
-            $users = User::where('active', true)
-                ->whereHas('roles', function ($query) {
-                    $query->whereIn('name', ['admin', 'agent']);
-                })
-                ->get();
-
-            // 5. Definir clases de estilo para los estados
-            $statusClasses = [
-                DocumentRequest::STATUS_PENDIENTE_LIDER => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-                DocumentRequest::STATUS_RECHAZADO_LIDER => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-                DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-                DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-                DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-                DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-            ];
-
-            // 6. Obtener las etiquetas de estado del modelo
-            $statusLabels = DocumentRequest::getStatusOptions();
-
-            // 7. Obtener los tipos de documento activos
-            $documentTypes = DocumentType::where('is_active', true)->get();
-
-            // 8. Obtener los procesos activos
-            $processes = Process::where('active', true)->get();
-
-            // 9. Retornar la vista con todas las variables necesarias
-            return view('documents.pending-leader', compact(
-                'documentRequests',
-                'users',
-                'statusClasses',
-                'statusLabels',
-                'documentTypes',
-                'processes'
-            ));
-        } catch (\Exception $e) {
-            Log::error('Error en pendingLeaderApproval', [
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-                'process_id' => Auth::user()->process_id ?? null,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return redirect()
-                ->route('documents.requests.index')
-                ->with('error', self::MESSAGE_ERROR_GENERIC);
-        }
-    }
-
     public function leaderApprove(Request $request, DocumentRequest $documentRequest)
     {
         try {
@@ -1186,12 +1122,20 @@ class DocumentRequestController extends Controller
 
             DB::beginTransaction();
 
-            // Determinar el estado según el tipo de solicitud
-            $newStatus = match ($documentRequest->request_type) {
-                'create' => DocumentRequest::STATUS_PUBLICADO,
-                'modify', 'obsolete' => DocumentRequest::STATUS_SIN_APROBAR,
-                default => throw new \Exception('Tipo de solicitud no válido')
-            };
+            // Verificar si el proceso tiene un segundo líder asignado
+            if ($documentRequest->process->second_leader_id) {
+                // Si hay segundo líder, pasa a pendiente de aprobación por el segundo líder
+                $newStatus = DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER;
+                $message = self::MESSAGE_PENDING_SECOND_LEADER;
+            } else {
+                // Si no hay segundo líder, determinar el estado según el tipo de solicitud
+                $newStatus = match ($documentRequest->request_type) {
+                    'create' => DocumentRequest::STATUS_PUBLICADO,
+                    'modify', 'obsolete' => DocumentRequest::STATUS_SIN_APROBAR,
+                    default => throw new \Exception('Tipo de solicitud no válido')
+                };
+                $message = self::MESSAGE_SUCCESS_LEADER_APPROVE;
+            }
 
             $updateData = [
                 'status' => $newStatus,
@@ -1220,7 +1164,7 @@ class DocumentRequestController extends Controller
 
             return redirect()
                 ->back()
-                ->with('success', self::MESSAGE_SUCCESS_LEADER_APPROVE);
+                ->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -1241,12 +1185,15 @@ class DocumentRequestController extends Controller
     public function leaderReject(Request $request, DocumentRequest $documentRequest)
     {
         try {
-            // Validar que el documento esté pendiente de aprobación
-            if ($documentRequest->status !== DocumentRequest::STATUS_PENDIENTE_LIDER) {
-                throw new \Exception('El documento no está pendiente de aprobación del líder.');
+            // Validar que el documento esté en un estado que pueda ser rechazado por un líder
+            if (!in_array($documentRequest->status, [
+                DocumentRequest::STATUS_PENDIENTE_LIDER,
+                DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER
+            ])) {
+                throw new \Exception('El documento no está en un estado que pueda ser rechazado por un líder.');
             }
 
-            // Validar que el usuario sea el líder del proceso
+            // Validar que el usuario sea el líder correspondiente según el estado
             if (!$this->validateLeaderPermissions($documentRequest)) {
                 throw new \Exception(self::MESSAGE_ERROR_LEADER_PERMISSION);
             }
@@ -1257,27 +1204,50 @@ class DocumentRequestController extends Controller
 
             DB::beginTransaction();
 
-            // Determinar el estado según el tipo de solicitud
-            $newStatus = match ($documentRequest->request_type) {
-                'create' => DocumentRequest::STATUS_REVISION,
-                'modify', 'obsolete' => DocumentRequest::STATUS_RECHAZADO_LIDER,
-                default => throw new \Exception('Tipo de solicitud no válido')
-            };
+            // Identificar qué líder está rechazando
+            $isPrimaryLeader = $documentRequest->status === DocumentRequest::STATUS_PENDIENTE_LIDER;
 
-            $documentRequest->update([
-                'status' => $newStatus,
-                'leader_observations' => $validated['observations'],
-                'leader_approval_date' => now()
-            ]);
+            // Determinar el estado según el tipo de solicitud y el líder que rechaza
+            if ($isPrimaryLeader) {
+                $newStatus = match ($documentRequest->request_type) {
+                    'create' => DocumentRequest::STATUS_REVISION,
+                    'modify', 'obsolete' => DocumentRequest::STATUS_RECHAZADO_LIDER,
+                    default => throw new \Exception('Tipo de solicitud no válido')
+                };
+
+                $documentRequest->update([
+                    'status' => $newStatus,
+                    'leader_observations' => $validated['observations'],
+                    'leader_approval_date' => now()
+                ]);
+            } else {
+                // Si es el segundo líder quien rechaza, determinar estado según tipo de solicitud
+                if ($documentRequest->request_type === 'create') {
+                    // Para documentos de CREACIÓN, el rechazo del segundo líder los envía a REVISION
+                    $documentRequest->update([
+                        'status' => DocumentRequest::STATUS_REVISION,
+                        'second_leader_observations' => $validated['observations'],
+                        'second_leader_approval_date' => now()
+                    ]);
+                } else {
+                    // Para otros tipos de documentos, sigue yendo a RECHAZADO_LIDER
+                    $documentRequest->update([
+                        'status' => DocumentRequest::STATUS_RECHAZADO_LIDER,
+                        'second_leader_observations' => $validated['observations'],
+                        'second_leader_approval_date' => now()
+                    ]);
+                }
+            }
 
             DB::commit();
 
-            Log::info('Documento procesado por líder', [
+            Log::info('Documento rechazado por líder', [
                 'document_request_id' => $documentRequest->id,
                 'user_id' => Auth::id(),
                 'process_id' => $documentRequest->process_id,
                 'request_type' => $documentRequest->request_type,
-                'new_status' => $newStatus,
+                'rejected_by' => $isPrimaryLeader ? 'líder principal' : 'segundo líder',
+                'new_status' => $documentRequest->status,
                 'observations' => $validated['observations']
             ]);
 
@@ -1298,6 +1268,195 @@ class DocumentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    /**
+     * Procesar la aprobación por parte del segundo líder
+     */
+    public function secondLeaderApprove(Request $request, DocumentRequest $documentRequest)
+    {
+        try {
+            // Validar que el documento esté pendiente de aprobación por el segundo líder
+            if ($documentRequest->status !== DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER) {
+                throw new \Exception('El documento no está pendiente de aprobación del segundo líder.');
+            }
+
+            // Validar que el usuario sea el segundo líder del proceso
+            if (!$this->validateLeaderPermissions($documentRequest)) {
+                throw new \Exception(self::MESSAGE_ERROR_SECOND_LEADER_PERMISSION);
+            }
+
+            $validated = $request->validate([
+                'observations' => 'nullable|string|max:1000',
+            ]);
+
+            DB::beginTransaction();
+
+            // Determinar el siguiente estado según el tipo de solicitud
+            $newStatus = match ($documentRequest->request_type) {
+                'create' => DocumentRequest::STATUS_PUBLICADO,
+                'modify', 'obsolete' => DocumentRequest::STATUS_SIN_APROBAR,
+                default => throw new \Exception('Tipo de solicitud no válido')
+            };
+
+            // Crear un arreglo con los datos a actualizar
+            $updateData = [
+                'status' => $newStatus,
+                'second_leader_observations' => $validated['observations'],
+                'second_leader_approval_date' => now()
+            ];
+
+            // Si es un nuevo documento y pasa a publicado, actualizar versión
+            if ($documentRequest->request_type === 'create' && $newStatus === DocumentRequest::STATUS_PUBLICADO) {
+                $updateData['version'] = 1; // Primera versión para documentos nuevos
+            }
+
+            $documentRequest->update($updateData);
+
+            DB::commit();
+
+            Log::info('Documento aprobado por segundo líder exitosamente', [
+                'document_request_id' => $documentRequest->id,
+                'user_id' => Auth::id(),
+                'process_id' => $documentRequest->process_id,
+                'request_type' => $documentRequest->request_type,
+                'new_status' => $newStatus,
+                'observations' => $validated['observations'] ?? null
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', self::MESSAGE_SUCCESS_SECOND_LEADER_APPROVE);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error en secondLeaderApprove', [
+                'error' => $e->getMessage(),
+                'document_request_id' => $documentRequest->id,
+                'user_id' => Auth::id(),
+                'process_id' => $documentRequest->process_id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
+        }
+    }
+
+    /**
+     * Muestra documentos pendientes de aprobación por cualquiera de los líderes
+     */
+    public function pendingLeaderApproval()
+    {
+        try {
+            // 1. Construir la consulta base con todas las relaciones necesarias
+            $query = DocumentRequest::with([
+                'user',
+                'documentType',
+                'responsible',
+                'assignedAgent',
+                'process'
+            ])->whereIn('status', [
+                DocumentRequest::STATUS_PENDIENTE_LIDER,
+                DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER
+            ]);
+
+            // 2. Filtrar por procesos donde el usuario es alguno de los líderes
+            if (!Auth::user()->hasPermissionTo('admin.only')) {
+                // Filtrar procesos donde el usuario es líder principal o segundo líder
+                $processesAsPrimaryLeader = Process::where('leader_id', Auth::id())->pluck('id')->toArray();
+                $processesAsSecondLeader = Process::where('second_leader_id', Auth::id())->pluck('id')->toArray();
+
+                if (empty($processesAsPrimaryLeader) && empty($processesAsSecondLeader)) {
+                    return redirect()
+                        ->route('documents.requests.index')
+                        ->with('error', 'No tiene permisos de líder en ningún proceso.');
+                }
+
+                // Filtrar por rol y estado para mostrar sólo documentos relevantes al usuario
+                $query->where(function ($q) use ($processesAsPrimaryLeader, $processesAsSecondLeader) {
+                    // Como líder principal, mostrar documentos en estado pendiente de líder principal de sus procesos
+                    if (!empty($processesAsPrimaryLeader)) {
+                        $q->where(function ($subq) use ($processesAsPrimaryLeader) {
+                            $subq->whereIn('process_id', $processesAsPrimaryLeader)
+                                ->where('status', DocumentRequest::STATUS_PENDIENTE_LIDER);
+                        });
+                    }
+
+                    // Como segundo líder, mostrar documentos en estado pendiente de segundo líder de sus procesos
+                    if (!empty($processesAsSecondLeader)) {
+                        $q->orWhere(function ($subq) use ($processesAsSecondLeader) {
+                            $subq->whereIn('process_id', $processesAsSecondLeader)
+                                ->where('status', DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER);
+                        });
+                    }
+                });
+            }
+
+            // 3. Obtener los documentos paginados
+            $documentRequests = $query->latest()->paginate(10);
+
+            // 4. Obtener usuarios activos con roles admin o agent
+            $users = User::where('active', true)
+                ->whereHas('roles', function ($query) {
+                    $query->whereIn('name', ['admin', 'agent']);
+                })
+                ->get();
+
+            // 5. Definir clases de estilo para los estados
+            $statusClasses = [
+                DocumentRequest::STATUS_PENDIENTE_LIDER => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+                DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                DocumentRequest::STATUS_RECHAZADO_LIDER => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+                DocumentRequest::STATUS_SIN_APROBAR => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                DocumentRequest::STATUS_EN_ELABORACION => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                DocumentRequest::STATUS_REVISION => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+                DocumentRequest::STATUS_PUBLICADO => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                DocumentRequest::STATUS_RECHAZADO => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+            ];
+
+            // 6. Obtener las etiquetas de estado del modelo
+            $statusLabels = DocumentRequest::getStatusOptions();
+
+            // 7. Obtener los tipos de documento activos
+            $documentTypes = DocumentType::where('is_active', true)->get();
+
+            // 8. Obtener los procesos activos
+            $processes = Process::where('active', true)->get();
+
+            // 9. Determinar qué tipo de líder es el usuario para cada documento
+            foreach ($documentRequests as $doc) {
+                if ($doc->process->leader_id === Auth::id()) {
+                    $doc->userLeaderType = 'primary';
+                } elseif ($doc->process->second_leader_id === Auth::id()) {
+                    $doc->userLeaderType = 'secondary';
+                } else {
+                    $doc->userLeaderType = null;
+                }
+            }
+
+            // 10. Retornar la vista con todas las variables necesarias
+            return view('documents.pending-leader', compact(
+                'documentRequests',
+                'users',
+                'statusClasses',
+                'statusLabels',
+                'documentTypes',
+                'processes'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error en pendingLeaderApproval', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'process_id' => Auth::user()->process_id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()
+                ->route('documents.requests.index')
+                ->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
 
@@ -1780,7 +1939,7 @@ class DocumentRequestController extends Controller
 
     /**
      * Valida los permisos del líder para un documento
-     *
+     * 
      * @param DocumentRequest $documentRequest
      * @return bool
      */
@@ -1798,17 +1957,35 @@ class DocumentRequestController extends Controller
                 return false;
             }
 
-            // Verificar si el usuario actual es el líder del proceso
-            if ($process->leader_id !== Auth::id()) {
-                Log::info('Usuario no es líder del proceso', [
-                    'user_id' => Auth::id(),
-                    'process_id' => $process->id,
-                    'leader_id' => $process->leader_id
-                ]);
-                return false;
+            // Verificar si el documento está en estado pendiente de aprobación por líder principal
+            if ($documentRequest->isPendingLeaderApproval()) {
+                // En estado pendiente de líder principal, verificar que el usuario sea el líder principal
+                if ($process->leader_id !== Auth::id()) {
+                    Log::info('Usuario no es líder principal del proceso', [
+                        'user_id' => Auth::id(),
+                        'process_id' => $process->id,
+                        'leader_id' => $process->leader_id
+                    ]);
+                    return false;
+                }
+                return true;
+            }
+            // Verificar si el documento está en estado pendiente de aprobación por segundo líder
+            elseif ($documentRequest->isPendingSecondLeaderApproval()) {
+                // En estado pendiente de segundo líder, verificar que el usuario sea el segundo líder
+                if ($process->second_leader_id !== Auth::id()) {
+                    Log::info('Usuario no es segundo líder del proceso', [
+                        'user_id' => Auth::id(),
+                        'process_id' => $process->id,
+                        'second_leader_id' => $process->second_leader_id
+                    ]);
+                    return false;
+                }
+                return true;
             }
 
-            return true;
+            // Si el documento no está en un estado de aprobación por líder, no tiene permisos
+            return false;
         } catch (\Exception $e) {
             Log::error('Error en validateLeaderPermissions', [
                 'error' => $e->getMessage(),
@@ -1832,7 +2009,14 @@ class DocumentRequestController extends Controller
         $allowedTransitions = [
             DocumentRequest::STATUS_PENDIENTE_LIDER => [
                 DocumentRequest::STATUS_RECHAZADO_LIDER,
-                DocumentRequest::STATUS_SIN_APROBAR
+                DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER,
+                DocumentRequest::STATUS_SIN_APROBAR, // Solo si no hay segundo líder
+                DocumentRequest::STATUS_PUBLICADO    // Solo si no hay segundo líder y es creación
+            ],
+            DocumentRequest::STATUS_PENDIENTE_SEGUNDO_LIDER => [
+                DocumentRequest::STATUS_RECHAZADO_LIDER,
+                DocumentRequest::STATUS_SIN_APROBAR,
+                DocumentRequest::STATUS_PUBLICADO // Solo si es creación
             ],
             DocumentRequest::STATUS_RECHAZADO_LIDER => [
                 DocumentRequest::STATUS_PENDIENTE_LIDER
@@ -1848,7 +2032,8 @@ class DocumentRequestController extends Controller
             DocumentRequest::STATUS_REVISION => [
                 DocumentRequest::STATUS_PUBLICADO,
                 DocumentRequest::STATUS_EN_ELABORACION,
-                DocumentRequest::STATUS_RECHAZADO
+                DocumentRequest::STATUS_RECHAZADO,
+                DocumentRequest::STATUS_PENDIENTE_LIDER // Añadida para el nuevo flujo de creación
             ],
             DocumentRequest::STATUS_RECHAZADO => [
                 DocumentRequest::STATUS_PENDIENTE_LIDER
@@ -1860,7 +2045,6 @@ class DocumentRequestController extends Controller
             !isset($allowedTransitions[$currentStatus]) ||
             !in_array($newStatus, $allowedTransitions[$currentStatus])
         ) {
-
             Log::warning('Intento de transición de estado no permitida', [
                 'current_status' => $currentStatus,
                 'new_status' => $newStatus,

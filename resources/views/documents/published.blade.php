@@ -815,7 +815,18 @@
         }
 
         // Función para aplicar los filtros
-        function applyFilters() {
+        function applyFilters(isSearchInput = false) {
+            // Si viene del campo de búsqueda y aún está enfocado, no enviar el formulario
+            if (isSearchInput && document.activeElement === searchInput) {
+                // Guardar el valor y la posición del cursor actual
+                const value = searchInput.value;
+                const cursorPosition = searchInput.selectionStart;
+                
+                // Almacenar estos valores para restaurarlos después de la recarga
+                sessionStorage.setItem('searchValue', value);
+                sessionStorage.setItem('cursorPosition', cursorPosition);
+            }
+            
             form.submit(); // Enviar el formulario normalmente para recargar la página
         }
 
@@ -853,16 +864,59 @@
 
         // Debounce para el campo de búsqueda general
         let searchTimeout = null;
+        let isTyping = false;
+        
+        searchInput.addEventListener('focus', function() {
+            isTyping = true;
+        });
+        
+        searchInput.addEventListener('blur', function() {
+            isTyping = false;
+            
+            // Si hay un timeout pendiente, ejecutarlo inmediatamente
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+                applyFilters(false);
+            }
+        });
+        
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilters, 500);
+            
+            // Solo programar el envío del formulario cuando el usuario deje de escribir
+            searchTimeout = setTimeout(function() {
+                if (!isTyping || document.activeElement !== searchInput) {
+                    applyFilters(false);
+                }
+            }, 1000); // Tiempo más largo para dar más tiempo para escribir
+        });
+        
+        // Al presionar Enter, buscar inmediatamente
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                applyFilters(false);
+            }
         });
 
         // Prevenir el submit por defecto del formulario
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            applyFilters();
+            applyFilters(false);
         });
+        
+        // Restaurar el valor y la posición del cursor después de la carga
+        if (searchInput && sessionStorage.getItem('searchValue')) {
+            searchInput.value = sessionStorage.getItem('searchValue');
+            searchInput.focus();
+            searchInput.setSelectionRange(
+                parseInt(sessionStorage.getItem('cursorPosition') || 0),
+                parseInt(sessionStorage.getItem('cursorPosition') || 0)
+            );
+            sessionStorage.removeItem('searchValue');
+            sessionStorage.removeItem('cursorPosition');
+        }
     });
 </script>
 @endpush
