@@ -291,6 +291,12 @@
                                 {{ $user->process?->name ?? 'No asignado' }}
                             </p>
                         </div>
+                        <div>
+                            <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Segundo Proceso</h5>
+                            <p class="mt-1 text-sm text-gray-800 dark:text-neutral-200">
+                                {{ $user->secondaryProcess?->name ?? 'No asignado' }}
+                            </p>
+                        </div>
                     </div>
 
                     <div>

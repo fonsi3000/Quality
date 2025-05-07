@@ -227,7 +227,7 @@
                                     <div class="flex items-center justify-between">
                                         <h4 class="text-sm font-medium text-gray-500 dark:text-neutral-300">Archivo del Documento</h4>
                                         <div class="flex space-x-3">
-                                            <a href="{{ route('documents.requests.preview', $request->id) }}" 
+                                            <a href="{{ route('documents.requests.preview-final', $request->id) }}" 
                                                target="_blank"
                                                class="inline-flex items-center gap-x-2 px-3 py-2 text-sm font-medium rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-neutral-600">
                                                 <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -236,7 +236,7 @@
                                                 </svg>
                                                 Previsualizar
                                             </a>
-                                            <a href="{{ route('documents.requests.download', $request->id) }}" 
+                                            <a href="{{ route('documents.requests.download-final', $request->id) }}" 
                                                class="inline-flex items-center gap-x-2 px-3 py-2 text-sm font-medium rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-neutral-600">
                                                 <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -369,7 +369,7 @@
                                     <div class="flex items-center justify-between">
                                         <h4 class="text-sm font-medium text-blue-700 dark:text-blue-300">Archivo del Documento</h4>
                                         <div class="flex space-x-3">
-                                            <a href="{{ route('documents.requests.preview', $request->id) }}" 
+                                            <a href="{{ route('documents.requests.preview-final', $request->id) }}" 
                                                target="_blank"
                                                class="inline-flex items-center gap-x-2 px-3 py-2 text-sm font-medium rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-blue-800">
                                                 <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -378,7 +378,7 @@
                                                 </svg>
                                                 Previsualizar
                                             </a>
-                                            <a href="{{ route('documents.requests.download', $request->id) }}" 
+                                            <a href="{{ route('documents.requests.download-final', $request->id) }}" 
                                                class="inline-flex items-center gap-x-2 px-3 py-2 text-sm font-medium rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-blue-800">
                                                 <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>

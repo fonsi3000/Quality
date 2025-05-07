@@ -18,6 +18,7 @@ class User extends Authenticatable
         'profile_photo',
         'unit_id',
         'process_id',
+        'second_process_id',
         'position_id',
         'active',
         'department'
@@ -48,7 +49,12 @@ class User extends Authenticatable
 
     public function process()
     {
-        return $this->belongsTo(Process::class);
+        return $this->belongsTo(Process::class, 'process_id');
+    }
+
+    public function secondaryProcess()
+    {
+        return $this->belongsTo(Process::class, 'second_process_id');
     }
 
     public function position()

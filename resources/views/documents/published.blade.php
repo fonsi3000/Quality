@@ -346,14 +346,23 @@
                                         {{ $request->responsible?->name ?? 'No asignado' }}
                                     </span>
                                 </div>
-
-                                <!-- Aprobado por -->
+                                <!-- Aprobado por líder principal -->
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado por:</span>
+                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado por líder principal:</span>
                                     <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $request->process?->leader?->name ?? 'No asignado' }}
                                     </span>
                                 </div>
+
+                                <!-- Aprobado por segundo líder -->
+                                @if ($request->process?->second_leader_id)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado por segundo líder:</span>
+                                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            {{ $request->process?->secondLeader?->name ?? 'No asignado' }}
+                                        </span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -389,6 +398,14 @@
                                     <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobación del Líder:</span>
                                     <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $request->leader_approval_date->format('d/m/Y H:i') }}
+                                    </span>
+                                </div>
+                                @endif
+                                @if($request->second_leader_approval_date)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobación del Segundo Líder:</span>
+                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                        {{ $request->second_leader_approval_date->format('d/m/Y H:i') }}
                                     </span>
                                 </div>
                                 @endif

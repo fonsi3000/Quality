@@ -1,4 +1,3 @@
-```blade
 @extends('layouts.app')
 
 @section('title', 'Solicitudes de Documentos')
@@ -772,7 +771,6 @@
     </div>
 </div>
 
-```blade
 <!-- Modal de Asignación -->
 <div id="assign-modal-{{ $request->id }}" class="hs-overlay hidden w-full h-full fixed top-0 start-0 z-[70] overflow-x-hidden overflow-y-auto">
     <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all w-[95%] sm:max-w-lg sm:w-full m-3 mx-auto min-h-[calc(100%-3.5rem)] flex items-center">
