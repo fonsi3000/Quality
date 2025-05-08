@@ -1,54 +1,57 @@
 version: '3.8'
 
 services:
-  app:
+  qualy_app:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: quality_app
-    ports:
-      - "8080:8080"
+      dockerfile: .deploy/Dockerfile
+    container_name: qualy_app
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_DATABASE=quality_db
-      - DB_USERNAME=quality
-      - DB_PASSWORD=E5pum452025*.
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+    volumes:
+      - .:/var/www/html
+      - shared-public:/var/www/html/public   # Volumen compartido para assets
+    ports:
+      - "${APP_EXTERNAL_PORT}:${APP_PORT}"
     depends_on:
-      db:
-        condition: service_healthy
+      - qualy_db
+      - qualy_redis
     networks:
-      - quality-network
-    volumes:
-      - ./storage:/app/storage
-    restart: unless-stopped
+      - proxy_net
 
-  db:
+  qualy_db:
     image: mysql:8.0
-    container_name: quality_db
+    container_name: qualy_db
     ports:
-      - "3308:3306"  # Cambiado a 3308 para evitar conflicto
+      - "${DB_EXTERNAL_PORT}:3306"
     environment:
-      - MYSQL_DATABASE=quality_db
-      - MYSQL_USER=quality
-      - MYSQL_PASSWORD=E5pum452025*.
-      - MYSQL_ROOT_PASSWORD=E5pum452025*.
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_HOST: ${MYSQL_ROOT_HOST}
     volumes:
-      - db-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - qualy_db_data:/var/lib/mysql
     networks:
-      - quality-network
-    restart: unless-stopped
+      - proxy_net
+
+  qualy_redis:
+    image: redis:7-alpine
+    container_name: qualy_redis
+    ports:
+      - "${REDIS_EXTERNAL_PORT}:6379"
+    networks:
+      - proxy_net
 
 networks:
-  quality-network:
-    driver: bridge
+  proxy_net:
+    external: true
 
 volumes:
-  db-data:
+  qualy_db_data:
+  shared-public:
+    external: true
+    name: shared-public
