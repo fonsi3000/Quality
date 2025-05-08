@@ -1565,15 +1565,18 @@ class DocumentRequestController extends Controller
                 'process'
             ]);
 
-            // Verificar si es admin.only
+            // Verificar si es admin o agent
             if (Auth::user()->hasRole(['admin', 'agent'])) {
                 $query->where('status', DocumentRequest::STATUS_PUBLICADO);
             } else {
-                // Usuario regular: Mostrar documentos públicos O documentos de su proceso
+                // Usuario regular: Mostrar documentos públicos O documentos de su proceso principal o secundario
                 $query->where('status', DocumentRequest::STATUS_PUBLICADO)
                     ->where(function ($q) {
                         $q->where('is_public', true)
-                            ->orWhere('process_id', Auth::user()->process_id);
+                            ->orWhereIn('process_id', [
+                                Auth::user()->process_id,
+                                Auth::user()->second_process_id,
+                            ]);
                     });
             }
 
@@ -1655,6 +1658,7 @@ class DocumentRequestController extends Controller
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
+
     public function search(Request $request)
     {
         try {
@@ -1662,7 +1666,10 @@ class DocumentRequestController extends Controller
 
             // Filtrar por proceso si el usuario no es admin
             if (!Auth::user()->hasRole('admin')) {
-                $query->where('process_id', Auth::user()->process_id);
+                $query->where(function ($q) {
+                    $q->where('process_id', Auth::user()->process_id)
+                        ->orWhere('process_id', Auth::user()->second_process_id);
+                });
             }
 
             // Aplicar búsqueda general
@@ -1752,6 +1759,7 @@ class DocumentRequestController extends Controller
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
+
 
     public function statistics()
     {
@@ -2102,7 +2110,10 @@ class DocumentRequestController extends Controller
 
             // Filtrar por proceso si el usuario no es admin
             if (!Auth::user()->hasRole('admin')) {
-                $query->where('process_id', Auth::user()->process_id);
+                $query->where(function ($q) {
+                    $q->where('process_id', Auth::user()->process_id)
+                        ->orWhere('process_id', Auth::user()->second_process_id);
+                });
             } else if ($request->has('process_id') && $request->process_id != 'all') {
                 // Filtro de proceso para admin (si selecciona un proceso específico)
                 $query->where('process_id', $request->process_id);
@@ -2173,6 +2184,7 @@ class DocumentRequestController extends Controller
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
     }
+
     public function toggleVisibility(DocumentRequest $documentRequest)  // Cambiado de $request a $documentRequest
     {
         try {
