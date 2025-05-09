@@ -101,7 +101,7 @@
                                 </div>
                                 <div>
                                     <a class="inline-block text-black hover:text-gray-600 focus:outline-none focus:text-gray-600 dark:text-white dark:hover:text-neutral-300 dark:focus:text-neutral-300" 
-                                       href="#">Presentar una Prueva</a>
+                                       href="#">Presentar una Prueba</a>
                                 </div>
                                 <div>
                                     <a class="inline-block text-black hover:text-gray-600 focus:outline-none focus:text-gray-600 dark:text-white dark:hover:text-neutral-300 dark:focus:text-neutral-300" 
