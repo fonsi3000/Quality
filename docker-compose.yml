@@ -13,7 +13,7 @@ services:
       APP_URL: ${APP_URL}
     volumes:
       - .:/var/www/html
-      - shared-public:/var/www/html/public   # Volumen compartido para assets
+      - qualy-public:/var/www/html/public   # ✅ Volumen externo aislado
     ports:
       - "${APP_EXTERNAL_PORT}:${APP_PORT}"
     depends_on:
@@ -52,6 +52,6 @@ networks:
 
 volumes:
   qualy_db_data:
-  shared-public:
+  qualy-public:               # ✅ Declaración como volumen externo
     external: true
-    name: shared-public
+    name: qualy-public
