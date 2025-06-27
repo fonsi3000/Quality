@@ -145,15 +145,17 @@ class DocumentRequestController extends Controller
             $documentTypes = DocumentType::where('is_active', true)->get();
             $users = User::where('active', true)->get();
 
-            // Obtener documentos publicados
+            // Cargar el usuario autenticado con sus procesos (principal y secundario)
+            $user = Auth::user()->load(['process:id,name', 'secondaryProcess:id,name']);
+
+
+            // Obtener documentos publicados filtrados por proceso si es rol "user"
             $publishedDocuments = DocumentRequest::with(['documentType'])
                 ->where('status', DocumentRequest::STATUS_PUBLICADO)
-                ->where(function ($query) {
-                    if (Auth::user()->hasRole('user')) {
-                        $query->whereHas('user', function ($q) {
-                            $q->where('process_id', Auth::user()->process_id);
-                        });
-                    }
+                ->when($user->hasRole('user'), function ($query) use ($user) {
+                    $query->whereHas('user', function ($q) use ($user) {
+                        $q->whereIn('process_id', [$user->process_id, $user->second_process_id]);
+                    });
                 })
                 ->get();
 
@@ -163,7 +165,8 @@ class DocumentRequestController extends Controller
                 'first_doc' => $publishedDocuments->first()
             ]);
 
-            return view('document-requests.create', compact('documentTypes', 'users', 'publishedDocuments'));
+            // Pasamos el usuario a la vista también
+            return view('document-requests.create', compact('documentTypes', 'users', 'publishedDocuments', 'user'));
         } catch (\Exception $e) {
             Log::error('Error en create DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -173,8 +176,10 @@ class DocumentRequestController extends Controller
         }
     }
 
+
     public function store(Request $request)
     {
+        // Log de información si se está intentando subir un archivo
         if ($request->hasFile('document')) {
             $file = $request->file('document');
             Log::info('Intento de subida de archivo', [
@@ -184,7 +189,8 @@ class DocumentRequestController extends Controller
                 'tamaño' => $file->getSize()
             ]);
         }
-        // Validación actual...
+
+        // Validación principal del formulario
         $validated = $request->validate([
             'request_type' => 'required|in:create,modify,obsolete',
             'document' => 'required|file|max:102400|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
@@ -192,28 +198,39 @@ class DocumentRequestController extends Controller
             'document_type_id' => $request->request_type === 'create' ? 'required|exists:document_types,id' : 'nullable',
             'document_name' => $request->request_type === 'create' ? 'required|string|max:255' : 'nullable',
             'existing_document_id' => in_array($request->request_type, ['modify', 'obsolete']) ? 'required|exists:document_requests,id' : 'nullable',
-            'created_at' => 'required|date', // Validación para la fecha personalizada
+            'created_at' => 'required|date',
+            // 🔁 Aquí corregimos: se valida origin_process (no process_id)
+            'origin_process' => 'required|exists:processes,id',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Verificaciones del usuario y proceso...
-            $user = User::with('process')->find(Auth::id());
-            $userProcess = $user->process;
-            if (!$userProcess) {
-                throw new \Exception('Usuario no tiene un proceso asignado.');
+            // Traer usuario con relaciones
+            $user = User::with(['process', 'secondaryProcess'])->find(Auth::id());
+
+            // 🔁 Aquí usamos el valor del select: origin_process
+            $selectedProcessId = $validated['origin_process'];
+
+            // Validar que el proceso pertenece al usuario autenticado
+            if (!in_array($selectedProcessId, [$user->process_id, $user->second_process_id])) {
+                throw new \Exception('No tiene permiso para enviar solicitudes a ese proceso.');
             }
 
-            if (!$userProcess->leader_id) {
+            // Obtener el proceso seleccionado
+            $selectedProcess = Process::findOrFail($selectedProcessId);
+
+            // Validar que tenga líder asignado
+            if (!$selectedProcess->leader_id) {
                 throw new \Exception(self::MESSAGE_ERROR_LEADER_PROCESS);
             }
 
+            // Validar que se haya enviado el archivo
             if (!$request->hasFile('document')) {
                 throw new \Exception('No se ha proporcionado ningún archivo');
             }
 
-            // Lógica del responsable...
+            // Asignación del responsable según el dominio del correo
             $emailParts = explode('@', $user->email);
             $domain = isset($emailParts[1]) ? $emailParts[1] : '';
 
@@ -231,21 +248,23 @@ class DocumentRequestController extends Controller
                 throw new \Exception('No se encontró un líder de calidad responsable.');
             }
 
+            // Guardar archivo y obtener ruta
             $path = $this->handleFileStorage($request->file('document'));
 
-            // Preparar datos base sin establecer el estado
+            // Datos base comunes a cualquier tipo de solicitud
             $documentData = [
                 'request_type' => $validated['request_type'],
                 'user_id' => Auth::id(),
                 'document_path' => $path,
                 'description' => $validated['description'],
-                'process_id' => $userProcess->id,
-                'origin' => $userProcess->name,
+                // 🔁 Aquí guardamos ambos: nombre como 'origin', id como 'process_id'
+                'process_id' => $selectedProcess->id,
+                'origin' => $selectedProcess->name,
                 'responsible_id' => $responsible->id,
                 'destination' => 'Calidad',
             ];
 
-            // Procesar según el tipo de solicitud
+            // Si es modify u obsolete, se toma info del documento referenciado
             if (in_array($validated['request_type'], ['modify', 'obsolete'])) {
                 $existingDocument = DocumentRequest::findOrFail($validated['existing_document_id']);
 
@@ -260,33 +279,30 @@ class DocumentRequestController extends Controller
                     'reference_document_id' => $existingDocument->id,
                 ]);
             } else {
+                // Si es tipo "create", se toman los campos del formulario
                 $documentData = array_merge($documentData, [
                     'document_type_id' => $validated['document_type_id'],
                     'document_name' => $validated['document_name'],
                 ]);
             }
 
-            // Crear el documento y establecer el estado inicial usando el método del modelo
-            // El método setInitialStatus() asignará STATUS_SIN_APROBAR para solicitudes de tipo 'create'
-            // y STATUS_PENDIENTE_LIDER para solicitudes de tipo 'modify' u 'obsolete'
+            // Crear instancia del modelo y establecer estado inicial
             $documentRequest = new DocumentRequest($documentData);
             $documentRequest->setInitialStatus();
-
-            // Asignamos la fecha de creación personalizada
-            $documentRequest->created_at = $validated['created_at'];
-
+            $documentRequest->created_at = $validated['created_at']; // fecha personalizada
             $documentRequest->save();
 
             DB::commit();
 
+            // Log exitoso
             Log::info('Solicitud de documento creada exitosamente', [
                 'document_request_id' => $documentRequest->id,
                 'type' => $validated['request_type'],
                 'status' => $documentRequest->status,
                 'user_id' => Auth::id(),
-                'process_id' => $userProcess->id,
+                'process_id' => $selectedProcess->id,
                 'responsible_id' => $responsible->id,
-                'created_at' => $validated['created_at'] // Registramos la fecha personalizada en los logs
+                'created_at' => $validated['created_at']
             ]);
 
             return redirect()
@@ -312,6 +328,8 @@ class DocumentRequestController extends Controller
                 ->with('error', $e->getMessage() ?: self::MESSAGE_ERROR_GENERIC);
         }
     }
+
+
     public function show(DocumentRequest $documentRequest)
     {
         try {

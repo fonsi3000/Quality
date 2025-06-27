@@ -55,6 +55,33 @@
                                 </select>
                             </div>
 
+                            <!-- Origen de la Solicitud -->
+                            <div class="space-y-2">
+                                <label for="origin_process" class="block text-sm font-medium text-gray-700 dark:text-neutral-300">
+                                    Origen del Proceso <span class="text-red-500">*</span>
+                                </label>
+
+                                <select id="origin_process" 
+                                        name="origin_process" 
+                                        class="py-2 px-3 block w-full border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
+                                        required>
+                                    <option value="">Seleccione un proceso</option>
+
+                                    {{-- Proceso principal del usuario --}}
+                                    @if($user->process)
+                                        <option value="{{ $user->process->id }}">
+                                            {{ $user->process->name }}
+                                        </option>
+                                    @endif
+
+                                    {{-- Proceso secundario del usuario --}}
+                                    @if($user->secondaryProcess)
+                                        <option value="{{ $user->secondaryProcess->id }}">
+                                            {{ $user->secondaryProcess->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                            </div>
                             <!-- Documento Existente (Solo para modificar/obsoletizar) -->
                             <div id="existing_document_section" class="space-y-2 hidden">
                                 <label for="document_search" class="block text-sm font-medium text-gray-700 dark:text-neutral-300">
@@ -180,6 +207,7 @@
         </div>
     </div>
 </div>
+
 
 @push('scripts')
 <script>
