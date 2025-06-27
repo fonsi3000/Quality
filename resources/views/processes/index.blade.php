@@ -293,14 +293,14 @@
                     </svg>
                 </button>
             </div>
-            
+
             <form id="assignLeaderForm" method="POST" class="mt-4">
                 @csrf
                 @method('PUT')
-                
+
                 <!-- Campo oculto para indicar el tipo de líder -->
                 <input type="hidden" id="leaderType" name="leader_type" value="primary">
-                
+
                 <!-- Campo de búsqueda -->
                 <div class="mb-4">
                     <div class="relative">
@@ -315,10 +315,19 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Lista de usuarios -->
                 <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-md dark:border-neutral-700">
                     <div id="usersList" class="divide-y divide-gray-200 dark:divide-neutral-700">
+                        <!-- Opción para des-asignar líder -->
+                        <label class="flex items-center px-4 py-2 hover:bg-gray-50 dark:hover:bg-neutral-700 cursor-pointer">
+                            <input type="radio" 
+                                   name="leader_id" 
+                                   value=""
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700">
+                            <span class="ml-2 text-sm text-gray-900 dark:text-neutral-200 italic">Sin líder asignado</span>
+                        </label>
+
                         @foreach($users as $user)
                             <label class="flex items-center px-4 py-2 hover:bg-gray-50 dark:hover:bg-neutral-700 cursor-pointer">
                                 <input type="radio" 
@@ -329,12 +338,14 @@
                             </label>
                         @endforeach
                     </div>
+
                     <!-- Mensaje cuando no hay resultados -->
                     <div id="noResults" class="hidden p-4 text-sm text-gray-500 text-center dark:text-neutral-400">
                         No se encontraron usuarios
                     </div>
                 </div>
 
+                <!-- Botones -->
                 <div class="flex justify-end gap-2 mt-4">
                     <button type="button" 
                             onclick="closeAssignLeaderModal()"
@@ -350,6 +361,7 @@
         </div>
     </div>
 </div>
+
 
 @push('scripts')
     <script>

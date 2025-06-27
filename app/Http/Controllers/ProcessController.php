@@ -123,6 +123,10 @@ class ProcessController extends Controller
 
         $validated['active'] = $request->has('active');
 
+        // Forzar null si vienen vacíos
+        $validated['leader_id'] = $request->input('leader_id') ?: null;
+        $validated['second_leader_id'] = $request->input('second_leader_id') ?: null;
+
         try {
             DB::beginTransaction();
             $process->update($validated);
@@ -139,6 +143,7 @@ class ProcessController extends Controller
                 ->with('error', 'Error al actualizar el proceso: ' . $e->getMessage());
         }
     }
+
 
     public function destroy(Request $request, Process $process)
     {
@@ -181,18 +186,19 @@ class ProcessController extends Controller
     public function assignLeader(Request $request, Process $process)
     {
         $validated = $request->validate([
-            'leader_id' => 'required|exists:users,id'
+            'leader_id' => 'nullable|exists:users,id'
         ]);
+
+        $leaderId = $request->input('leader_id') ?: null;
 
         try {
             DB::beginTransaction();
 
-            // Verificar que el líder principal no sea igual al secundario si existe
-            if ($process->second_leader_id && $validated['leader_id'] == $process->second_leader_id) {
+            if ($process->second_leader_id && $leaderId == $process->second_leader_id) {
                 throw new \Exception('El líder principal no puede ser el mismo que el líder secundario.');
             }
 
-            $process->update(['leader_id' => $validated['leader_id']]);
+            $process->update(['leader_id' => $leaderId]);
 
             DB::commit();
 
@@ -221,26 +227,27 @@ class ProcessController extends Controller
         }
     }
 
+
     public function assignSecondLeader(Request $request, Process $process)
     {
         $validated = $request->validate([
-            'leader_id' => 'required|exists:users,id'
+            'leader_id' => 'nullable|exists:users,id'
         ]);
+
+        $leaderId = $request->input('leader_id') ?: null;
 
         try {
             DB::beginTransaction();
 
-            // Verificar que exista un líder principal asignado
-            if (!$process->leader_id) {
+            if (!$process->leader_id && $leaderId !== null) {
                 throw new \Exception('Debe asignar un líder principal antes de asignar un líder secundario.');
             }
 
-            // Verificar que el líder secundario no sea igual al principal
-            if ($validated['leader_id'] == $process->leader_id) {
+            if ($leaderId && $leaderId == $process->leader_id) {
                 throw new \Exception('El líder secundario no puede ser el mismo que el líder principal.');
             }
 
-            $process->update(['second_leader_id' => $validated['leader_id']]);
+            $process->update(['second_leader_id' => $leaderId]);
 
             DB::commit();
 
@@ -268,6 +275,7 @@ class ProcessController extends Controller
                 ->with('error', $errorMessage);
         }
     }
+
 
     public function getLeaderInfo(Process $process)
     {
