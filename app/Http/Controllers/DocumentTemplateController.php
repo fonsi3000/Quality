@@ -58,7 +58,7 @@ class DocumentTemplateController extends Controller
             'file' => [
                 'required',
                 'file',
-                'max:51200', // 50MB máximo
+                'max:102400', // 50MB máximo
             ],
         ]);
 
@@ -145,7 +145,7 @@ class DocumentTemplateController extends Controller
             'file' => [
                 'nullable',
                 'file',
-                'max:51200', // 50MB máximo
+                'max:102400', // 50MB máximo
             ],
             'is_active' => ['boolean']
         ]);

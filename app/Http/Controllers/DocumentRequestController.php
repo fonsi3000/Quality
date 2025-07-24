@@ -431,7 +431,7 @@ class DocumentRequestController extends Controller
             'document_type_id' => 'required|exists:document_types,id',
             'document_name' => 'required|string|max:255',
             'description' => 'required|string',
-            'document' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx',
+            'document' => 'nullable|file|max:102400|mimes:pdf,doc,docx,xls,xlsx',
             'created_at' => 'required|date', // Validación para la fecha de creación personalizada
         ]);
 
@@ -596,10 +596,11 @@ class DocumentRequestController extends Controller
                 throw new \Exception(self::MESSAGE_ERROR_FILE);
             }
 
+            
             // Limpiar el nombre del documento para evitar caracteres especiales
-            $safeName = Str::slug(pathinfo($documentRequest->document_name, PATHINFO_FILENAME));
+            $baseName  = $documentRequest->document_name; 
             $extension = pathinfo($documentRequest->document_path, PATHINFO_EXTENSION);
-            $filename = $safeName . '.' . $extension;
+            $filename = $baseName . '.' . $extension;
 
             return Storage::disk('public')->download($documentRequest->document_path, $filename);
         } catch (\Exception $e) {
@@ -655,7 +656,7 @@ class DocumentRequestController extends Controller
             }
 
             $extension = pathinfo($documentRequest->final_document_path, PATHINFO_EXTENSION);
-            $originalName = pathinfo($documentRequest->document_name, PATHINFO_FILENAME);
+            $originalName = $documentRequest->document_name;
             $filename = $originalName . '.' . $extension;
 
             return Storage::disk('public')->download($documentRequest->final_document_path, $filename);
