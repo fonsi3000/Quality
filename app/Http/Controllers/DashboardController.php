@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\DocumentRequest;
+use App\Models\Process;
 use Illuminate\Support\Facades\Auth;
+
+use function PHPSTORM_META\map;
 
 class DashboardController extends Controller
 {
@@ -39,11 +42,23 @@ class DashboardController extends Controller
             DocumentRequest::STATUS_PUBLICADO
         )->count();
 
+        $process = Process::with(['documentRequests'])->whereHas('documentRequests',function($q){
+            $q -> where('status','publicado');
+        });        
+
+        $mainIds = $process->limit(4)->pluck('id')->toArray();
+        
+
+        $mainProcess = $process->whereIn('id',$mainIds)->get();
+        $otherProcess = $process ->whereNotIn('id',$mainIds)->get();
+        
         return view('dashboard', compact(
             'activeUsersCount',
             'inactiveUsersCount',
             'activeTasks',
-            'publishedDocuments'
+            'publishedDocuments',
+            'mainProcess',
+            'otherProcess'
         ));
     }
 }
