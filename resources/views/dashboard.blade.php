@@ -259,24 +259,29 @@
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-neutral-200">No hay procesos</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">Las procesos apareceran cuando se creen nuevos.</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">Las procesos apareceran cuando se creen nuevos.
+                </p>
             </div>
         </div>
     @endif
 
     <!-- Modal Overlay -->
-    <div id="modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300">
+    <div id="modal"
+        class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="relative w-full max-w-4xl mx-auto bg-white dark:bg-neutral-900 rounded-xl shadow-2xl transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <div class="relative w-full max-w-4xl mx-auto bg-white dark:bg-neutral-900 rounded-xl shadow-2xl transform transition-all duration-300 scale-95 opacity-0"
+                id="modal-content">
                 <!-- Header del Modal -->
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-neutral-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-neutral-200" id="modal-title">
                         Documentos del Proceso
                     </h3>
-                    <button id="modal-close" 
+                    <button id="modal-close"
                         class="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 dark:text-neutral-500 dark:hover:text-neutral-300 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-900">
-                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
@@ -288,23 +293,27 @@
                             <thead class="bg-gray-50 dark:bg-neutral-800 sticky top-0 z-10">
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
+                                        <span
+                                            class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
                                             Nombre del Documento
                                         </span>
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
+                                        <span
+                                            class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
                                             Versión
                                         </span>
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
+                                        <span
+                                            class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
                                             Fecha de actualización
                                         </span>
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="modal-body" class="divide-y divide-gray-200 dark:divide-neutral-700 bg-white dark:bg-neutral-900">
+                            <tbody id="modal-body"
+                                class="divide-y divide-gray-200 dark:divide-neutral-700 bg-white dark:bg-neutral-900">
                                 <!-- Contenido dinámico -->
                             </tbody>
                         </table>
@@ -313,17 +322,19 @@
 
                 <!-- Mensaje cuando no hay documentos -->
                 <div id="modal-empty" class="hidden text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-neutral-500" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-neutral-200">No hay documentos</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">Este proceso no tiene documentos asociados.</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">Este proceso no tiene documentos asociados.
+                    </p>
                 </div>
 
                 <!-- Footer del Modal -->
                 <div class="flex justify-end p-6 border-t border-gray-200 dark:border-neutral-700">
-                    <button id="modal-close-2" 
+                    <button id="modal-close-2"
                         class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-md hover:bg-gray-50 dark:hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-900 transition-colors duration-200">
                         Cerrar
                     </button>
@@ -352,7 +363,8 @@
                 if (docs.length > 0) {
                     docs.forEach((d, i) => {
                         const tr = document.createElement('tr');
-                        tr.classList.add('hover:bg-gray-50', 'dark:hover:bg-neutral-800/50', 'transition-colors', 'duration-150');
+                        tr.classList.add('hover:bg-gray-50', 'dark:hover:bg-neutral-800/50',
+                            'transition-colors', 'duration-150');
                         tr.innerHTML = `
                             <td class="px-6 py-4">
                                 <div class="flex flex-col">
@@ -395,7 +407,7 @@
                 modalContent.classList.remove('scale-100', 'opacity-100');
                 modalContent.classList.add('scale-95', 'opacity-0');
                 modal.classList.remove('opacity-100');
-                
+
                 setTimeout(() => {
                     modal.classList.add('hidden');
                 }, 300);
@@ -414,7 +426,7 @@
             // Eventos para cerrar
             btnClose.addEventListener('click', closeModal);
             btnClose2.addEventListener('click', closeModal);
-            
+
             // Cerrar al hacer clic en el overlay
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) closeModal();

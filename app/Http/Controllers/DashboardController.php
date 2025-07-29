@@ -42,14 +42,23 @@ class DashboardController extends Controller
             DocumentRequest::STATUS_PUBLICADO
         )->count();
 
+        
+        //procesos con documentos publicados
         $process = Process::with(['documentRequests'])->whereHas('documentRequests',function($q){
             $q -> where('status','publicado');
-        });        
-
-        $mainIds = $process->limit(4)->pluck('id')->toArray();
+        });     
         
+        // traer id de la organizacion del usuario actual
+        $unitId = $usuarioActual -> unit_id;
+        // traer el id de los procesos de la organizacion a la que pertenece el usuario
+        $processIds = User::where('unit_id', $unitId)->pluck('process_id')->unique()->toArray();
 
+        // traer los primeros 4 ids de los procesos
+        $mainIds = $process->whereIn('id', $processIds)->limit(4)->pluck('id')->toArray();
+        
+        // traer los primeros 4 procesos que se van a mostrar en el dashboard
         $mainProcess = $process->whereIn('id',$mainIds)->get();
+        // traer los otros procesos
         $otherProcess = $process ->whereNotIn('id',$mainIds)->get();
         
         return view('dashboard', compact(
