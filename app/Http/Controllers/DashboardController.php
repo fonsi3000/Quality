@@ -50,6 +50,7 @@ class DashboardController extends Controller
         
         // traer id de la organizacion del usuario actual
         $unitId = $usuarioActual -> unit_id;
+        
         // traer el id de los procesos de la organizacion a la que pertenece el usuario
         $processIds = User::where('unit_id', $unitId)->pluck('process_id')->unique()->toArray();
 
