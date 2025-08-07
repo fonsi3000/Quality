@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DocumentRequestExport;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\User;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DocumentRequestController extends Controller
 {
@@ -2202,6 +2204,10 @@ class DocumentRequestController extends Controller
 
             return redirect()->back()->with('error', self::MESSAGE_ERROR_GENERIC);
         }
+    }
+
+    public function exportExcel(){
+        return Excel::download(new DocumentRequestExport, 'documentMaster.xlsx');
     }
 
     public function toggleVisibility(DocumentRequest $documentRequest)  // Cambiado de $request a $documentRequest

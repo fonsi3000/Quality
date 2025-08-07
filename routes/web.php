@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
             ->name('published');
         Route::get('/masterdocument', [DocumentRequestController::class, 'masterdocument'])
             ->name('masterdocument');
+        //ruta para obtener reporte de documentos maestros
+        Route::get('/exportMasterDocuments',[DocumentRequestController::class, 'exportExcel'])->name('exportExcel');
         Route::get('/pending-leader', [DocumentRequestController::class, 'pendingLeaderApproval'])
             ->name('pending-leader');
 

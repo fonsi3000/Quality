@@ -227,7 +227,7 @@
 
         // Event listener para cambios en el tipo de solicitud
         requestTypeSelect.addEventListener('change', function() {
-            const requestType = this.value;
+            const requestType = requestTypeSelect.value;
             
             // Resetear campos
             searchInput.value = '';
@@ -292,7 +292,7 @@
                 
                 const matchesSearch = (docName.toLowerCase().includes(searchTerm) ||
                                     docTypeName.toLowerCase().includes(searchTerm));
-                const matchesStatus = requestType !== 'obsolete' || 
+                const matchesStatus = doc.status !== 'OBSOLETO' || 
                                     doc.status === 'PUBLICADO'; // Ajustado para coincidir con DocumentRequest::STATUS_PUBLICADO
 
                 return matchesSearch && matchesStatus;
