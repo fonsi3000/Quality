@@ -192,17 +192,17 @@
     </div>
 
     <!--Otros procesos-->
-    <div id="otros" class="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
+    <div id="otros" class="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4 hidden">
         @foreach ($otherProcess as $ps)
             <div class="proc-card overflow-hidden rounded-lg bg-white shadow dark:bg-neutral-800 cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                data-process-name="{{ $ps->name }}" process-docs="@json($ps->documentRequests)">
+                data-process-name="{{ $ps->name }}" process-docs='@json($ps->documentRequests)'>
                 <div class="p-5">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <span
                                 class="flex items-center justify-center w-12 h-12 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400">
-                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -222,18 +222,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-5 py-3 dark:bg-neutral-800/50">
-                    <div class="text-sm">
-                        <a href="{{ route('documents.published') }}"
-                            class="font-medium text-purple-600 hover:text-purple-500 dark:text-purple-400 dark:hover:text-purple-300">
-                            Ver documentos publicados
-                            <span aria-hidden="true"> &rarr;</span>
-                        </a>
-                    </div>
-                </div>
             </div>
         @endforeach
     </div>
+
 
     <!-- Botón Ver más -->
     @if (count($otherProcess) > 0)

@@ -46,7 +46,12 @@ class DashboardController extends Controller
         //procesos con documentos publicados
         $process = Process::with(['documentRequests'])->whereHas('documentRequests',function($q){
             $q -> where('status','publicado');
-        });     
+        });
+        
+        //query para otros procesos
+        $otherProcessQuery = Process::with(['documentRequests'])->whereHas('documentRequests',function($q){
+            $q -> where('status','publicado');
+        });  
         
         // traer id de la organizacion del usuario actual
         $unitId = $usuarioActual -> unit_id;
@@ -60,7 +65,7 @@ class DashboardController extends Controller
         // traer los primeros 4 procesos que se van a mostrar en el dashboard
         $mainProcess = $process->whereIn('id',$mainIds)->get();
         // traer los otros procesos
-        $otherProcess = $process ->whereNotIn('id',$mainIds)->get();
+        $otherProcess = $otherProcessQuery -> whereIn('id', $processIds)->whereNotIn('id',$mainIds)->get();
         
         return view('dashboard', compact(
             'activeUsersCount',
