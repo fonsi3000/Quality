@@ -13,16 +13,17 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SsoController;
+
 
 // Ruta principal
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
 
+Route::get('/sso-login', [SsoController::class, 'handle']);
 // Rutas para invitados (no autenticados)
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::get('/login', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
+    Route::post('/login', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
 });
 
 // Ruta de cierre de sesión
@@ -53,7 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/masterdocument', [DocumentRequestController::class, 'masterdocument'])
             ->name('masterdocument');
         //ruta para obtener reporte de documentos maestros
-        Route::get('/exportMasterDocuments',[DocumentRequestController::class, 'exportExcel'])->name('exportExcel');
+        Route::get('/exportMasterDocuments', [DocumentRequestController::class, 'exportExcel'])->name('exportExcel');
         Route::get('/pending-leader', [DocumentRequestController::class, 'pendingLeaderApproval'])
             ->name('pending-leader');
 

@@ -72,38 +72,18 @@
                                     </svg>
                                 </button>
 
-                                <!-- Profile Dropdown -->
-                                <div class="hs-dropdown hs-dropdown-up relative inline-flex">
-                                    <button type="button" class="inline-flex items-center gap-2" data-hs-dropdown-toggle>
-                                        @if(Auth::user()->profile_photo)
-                                            <img class="w-10 h-10 rounded-full object-cover" src="{{ asset('storage/' . Auth::user()->profile_photo) }}" alt="{{ Auth::user()->name }}">
-                                        @else
-                                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                <span class="text-gray-600 text-lg font-medium">{{ substr(Auth::user()->name, 0, 1) }}</span>
-                                            </div>
-                                        @endif
-                                        <span class="hidden md:block text-sm font-medium text-gray-600 dark:text-neutral-300">
-                                            {{ Auth::user()->name }}
-                                        </span>
-                                    </button>
-
-                                    <div class="hs-dropdown-menu hidden transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 min-w-48 bg-white shadow-md rounded-lg p-2 mb-2 bottom-full dark:bg-neutral-800 dark:border dark:border-neutral-700 z-[9999] absolute left-0" aria-labelledby="hs-dropdown-with-header">
-                                        <div class="py-3 px-5 -m-2 bg-gray-100 rounded-t-lg dark:bg-neutral-700">
-                                            <p class="text-sm text-gray-500 dark:text-neutral-400">Conectado como</p>
-                                            <p class="text-sm font-medium text-gray-800 dark:text-neutral-300">
-                                                {{ Auth::user()->email }}
-                                            </p>
-                                        </div>
-                                        <div class="mt-2 py-2 first:pt-0 last:pb-0">
-                                            <form method="POST" action="{{ route('logout') }}" class="w-full">
-                                                @csrf
-                                                <button type="submit" class="w-full text-left flex items-center gap-x-3.5 py-2 px-3 text-sm text-red-600 rounded-lg hover:bg-gray-100 dark:text-red-500 dark:hover:bg-neutral-700">
-                                                    Cerrar sesión
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- Botón "Volver al inicio" que cierra sesión y redirige -->
+                                <button
+                                    type="button"
+                                    onclick="logoutAndGoHome()"
+                                    class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    aria-label="Volver al inicio"
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l7-7m0 0l7 7m-7-7v18" />
+                                    </svg>
+                                    <span class="text-sm font-medium">Volver al inicio</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -116,157 +96,178 @@
             </div>
         </div>
 
-        <!-- Mobile Menu (Off-canvas) --><!-- Mobile Menu (Off-canvas) -->
+        <!-- Mobile Menu (Off-canvas) -->
         <div id="mobile-menu" 
-        class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full fixed top-0 start-0 transition-all duration-300 transform h-full max-w-xs w-full z-[60] bg-white border-e dark:bg-neutral-800 dark:border-neutral-700 hidden" 
-        tabindex="-1">
-       <div class="flex justify-between items-center py-3 px-4 border-b dark:border-neutral-700">
-           <!-- Logo -->
-           <div class="flex items-center justify-center mb-4">
-                <a href="#" class="flex items-center">
-                    <img src="{{ asset('images/logo.png') }}" class="h-16 w-auto" alt="Logo">
-                </a>
+            class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full fixed top-0 start-0 transition-all duration-300 transform h-full max-w-xs w-full z-[60] bg-white border-e dark:bg-neutral-800 dark:border-neutral-700 hidden" 
+            tabindex="-1">
+            <div class="flex justify-between items-center py-3 px-4 border-b dark:border-neutral-700">
+                <!-- Logo -->
+                <div class="flex items-center justify-center mb-4">
+                    <a href="#" class="flex items-center">
+                        <img src="{{ asset('images/logo.png') }}" class="h-16 w-auto" alt="Logo">
+                    </a>
+                </div>
+                <button type="button" 
+                        class="hs-overlay-close flex justify-center items-center w-8 h-8 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-neutral-700" 
+                        data-hs-overlay="#mobile-menu">
+                    <span class="sr-only">Cerrar</span>
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
-           <button type="button" 
-                   class="hs-overlay-close flex justify-center items-center w-8 h-8 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-neutral-700" 
-                   data-hs-overlay="#mobile-menu">
-               <span class="sr-only">Cerrar</span>
-               <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                   <path d="M18 6L6 18M6 6l12 12"/>
-               </svg>
-           </button>
-       </div>
-       <div class="p-4">
-           <!-- Mobile Navigation Items -->
-           @include('layouts.menu')
-       </div>
-   </div>
+            <div class="p-4">
+                <!-- Mobile Navigation Items -->
+                @include('layouts.menu')
+            </div>
+        </div>
 
-<!-- Scripts -->
-@stack('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Inicializar HSOverlay
-        if (typeof HSOverlay !== 'undefined') {
-            HSOverlay.init();
-        }
+        <!-- Scripts -->
+        @stack('scripts')
+        <script>
+            // Cierra la sesión en Laravel y redirige al dashboard del frontend
+            async function logoutAndGoHome() {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const homeUrl = '{{ rtrim(env('ANGULAR_URL', 'http://localhost:4200'), '/') }}/dashboard';
 
-        // Inicializar HSDropdown
-        if (typeof HSDropdown !== 'undefined') {
-            HSDropdown.init();
-        }
-
-        // Inicializar HSAccordion para el grupo principal
-        if (typeof HSAccordion !== 'undefined') {
-            // Inicializar grupos de acordeones
-            const accordionGroups = document.querySelectorAll('.hs-accordion-group');
-            accordionGroups.forEach(group => {
-                HSAccordion.init(group);
-            });
-
-            // Inicializar acordeones individuales que no estén dentro de grupos
-            const standaloneAccordions = document.querySelectorAll('.hs-accordion:not(.hs-accordion-group .hs-accordion)');
-            standaloneAccordions.forEach(accordion => {
-                HSAccordion.init(accordion);
-            });
-        }
-
-        // Manejar el cierre del menú móvil al hacer clic en un enlace
-        const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenu) {
-            const links = mobileMenu.getElementsByTagName('a');
-            Array.from(links).forEach(link => {
-                link.addEventListener('click', () => {
-                    HSOverlay.close(mobileMenu);
-                });
-            });
-        }
-    });
-
-    // Script para los acordeones
-    document.addEventListener('DOMContentLoaded', function() {
-        // Verificar rutas
-        const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
-        
-        const isDocumentsRoute = {{ Request::routeIs('documents.*') ? 'true' : 'false' }};
-        
-        const isDocumentManagementRoute = {{ 
-            Request::routeIs('documents.requests.*') || 
-            Request::routeIs('documents.in-progress') || 
-            Request::routeIs('documents.in-review') || 
-            Request::routeIs('documents.pending-leader') ? 'true' : 'false' 
-        }};
-        
-        const isDocumentSettingsRoute = {{ 
-            Request::routeIs('document-types.*') || 
-            Request::routeIs('document-templates.*') ? 'true' : 'false' 
-        }};
-
-        // Función mejorada para expandir acordeón
-        const expandAccordion = (accordionId) => {
-            const accordion = document.querySelector(`#${accordionId}`);
-            if (accordion) {
-                const toggle = accordion.querySelector('.hs-accordion-toggle');
-                const content = accordion.querySelector('.hs-accordion-content');
-                
-                if (toggle && content) {
-                    // Expandir el acordeón
-                    toggle.setAttribute('aria-expanded', 'true');
-                    content.classList.remove('hidden');
-                    content.style.height = 'auto';
-                    accordion.classList.add('hs-accordion-active');
-
-                    // Si es un subacordeón, expandir también el padre
-                    const parentAccordion = accordion.closest('.hs-accordion-group > .hs-accordion');
-                    if (parentAccordion && parentAccordion.id !== accordionId) {
-                        expandAccordion(parentAccordion.id);
-                    }
+                try {
+                    await fetch('{{ route('logout') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin'
+                    });
+                } catch (e) {
+                    // ignoramos errores de red; igual vamos a redirigir
+                } finally {
+                    window.location.href = homeUrl;
                 }
             }
-        };
 
-        // Función para verificar si un acordeón está activo
-        const isAccordionActive = (accordionId) => {
-            const accordion = document.querySelector(`#${accordionId}`);
-            return accordion && accordion.classList.contains('hs-accordion-active');
-        };
+            document.addEventListener('DOMContentLoaded', function () {
+                // Inicializar HSOverlay
+                if (typeof HSOverlay !== 'undefined') {
+                    HSOverlay.init();
+                }
 
-        // Expandir acordeones basado en la ruta actual
-        if (isOrganizationRoute) {
-            expandAccordion('organization-accordion');
-        }
+                // Inicializar HSDropdown
+                if (typeof HSDropdown !== 'undefined') {
+                    HSDropdown.init();
+                }
 
-        if (isDocumentsRoute || isDocumentManagementRoute || isDocumentSettingsRoute) {
-            // Siempre expandir el acordeón principal de documentos primero
-            expandAccordion('documents-accordion');
-            
-            // Luego expandir los subacordeones según la ruta
-            if (isDocumentManagementRoute) {
-                expandAccordion('doc-management-accordion');
-            }
-            
-            if (isDocumentSettingsRoute) {
-                expandAccordion('doc-settings-accordion');
-            }
-        }
+                // Inicializar HSAccordion para el grupo principal
+                if (typeof HSAccordion !== 'undefined') {
+                    // Inicializar grupos de acordeones
+                    const accordionGroups = document.querySelectorAll('.hs-accordion-group');
+                    accordionGroups.forEach(group => {
+                        HSAccordion.init(group);
+                    });
 
-        // Manejar la expansión manual de acordeones
-        document.querySelectorAll('.hs-accordion-toggle').forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                const accordion = toggle.closest('.hs-accordion');
-                if (accordion) {
-                    const isExpanding = !isAccordionActive(accordion.id);
-                    if (isExpanding) {
-                        // Si estamos expandiendo, asegurarnos de que el padre también esté expandido
-                        const parentAccordion = accordion.closest('.hs-accordion-group > .hs-accordion');
-                        if (parentAccordion && parentAccordion.id !== accordion.id) {
-                            expandAccordion(parentAccordion.id);
+                    // Inicializar acordeones individuales que no estén dentro de grupos
+                    const standaloneAccordions = document.querySelectorAll('.hs-accordion:not(.hs-accordion-group .hs-accordion)');
+                    standaloneAccordions.forEach(accordion => {
+                        HSAccordion.init(accordion);
+                    });
+                }
+
+                // Manejar el cierre del menú móvil al hacer clic en un enlace
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenu) {
+                    const links = mobileMenu.getElementsByTagName('a');
+                    Array.from(links).forEach(link => {
+                        link.addEventListener('click', () => {
+                            HSOverlay.close(mobileMenu);
+                        });
+                    });
+                }
+            });
+
+            // Script para los acordeones
+            document.addEventListener('DOMContentLoaded', function() {
+                // Verificar rutas
+                const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
+                
+                const isDocumentsRoute = {{ Request::routeIs('documents.*') ? 'true' : 'false' }};
+                
+                const isDocumentManagementRoute = {{ 
+                    Request::routeIs('documents.requests.*') || 
+                    Request::routeIs('documents.in-progress') || 
+                    Request::routeIs('documents.in-review') || 
+                    Request::routeIs('documents.pending-leader') ? 'true' : 'false' 
+                }};
+                
+                const isDocumentSettingsRoute = {{ 
+                    Request::routeIs('document-types.*') || 
+                    Request::routeIs('document-templates.*') ? 'true' : 'false' 
+                }};
+
+                // Función mejorada para expandir acordeón
+                const expandAccordion = (accordionId) => {
+                    const accordion = document.querySelector(`#${accordionId}`);
+                    if (accordion) {
+                        const toggle = accordion.querySelector('.hs-accordion-toggle');
+                        const content = accordion.querySelector('.hs-accordion-content');
+                        
+                        if (toggle && content) {
+                            // Expandir el acordeón
+                            toggle.setAttribute('aria-expanded', 'true');
+                            content.classList.remove('hidden');
+                            content.style.height = 'auto';
+                            accordion.classList.add('hs-accordion-active');
+
+                            // Si es un subacordeón, expandir también el padre
+                            const parentAccordion = accordion.closest('.hs-accordion-group > .hs-accordion');
+                            if (parentAccordion && parentAccordion.id !== accordionId) {
+                                expandAccordion(parentAccordion.id);
+                            }
                         }
                     }
+                };
+
+                // Función para verificar si un acordeón está activo
+                const isAccordionActive = (accordionId) => {
+                    const accordion = document.querySelector(`#${accordionId}`);
+                    return accordion && accordion.classList.contains('hs-accordion-active');
+                };
+
+                // Expandir acordeones basado en la ruta actual
+                if (isOrganizationRoute) {
+                    expandAccordion('organization-accordion');
                 }
+
+                if (isDocumentsRoute || isDocumentManagementRoute || isDocumentSettingsRoute) {
+                    // Siempre expandir el acordeón principal de documentos primero
+                    expandAccordion('documents-accordion');
+                    
+                    // Luego expandir los subacordeones según la ruta
+                    if (isDocumentManagementRoute) {
+                        expandAccordion('doc-management-accordion');
+                    }
+                    
+                    if (isDocumentSettingsRoute) {
+                        expandAccordion('doc-settings-accordion');
+                    }
+                }
+
+                // Manejar la expansión manual de acordeones
+                document.querySelectorAll('.hs-accordion-toggle').forEach(toggle => {
+                    toggle.addEventListener('click', () => {
+                        const accordion = toggle.closest('.hs-accordion');
+                        if (accordion) {
+                            const isExpanding = !isAccordionActive(accordion.id);
+                            if (isExpanding) {
+                                // Si estamos expandiendo, asegurarnos de que el padre también esté expandido
+                                const parentAccordion = accordion.closest('.hs-accordion-group > .hs-accordion');
+                                if (parentAccordion && parentAccordion.id !== accordion.id) {
+                                    expandAccordion(parentAccordion.id);
+                                }
+                            }
+                        }
+                    });
+                });
             });
-        });
-    });
-</script>
-</body>
+        </script>
+    </body>
 </html>
