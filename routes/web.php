@@ -14,16 +14,15 @@ use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SsoController;
-
+use Illuminate\Support\Facades\Redirect;
 
 // Ruta principal
 Route::get('/', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
 
 Route::get('/sso-login', [SsoController::class, 'handle']);
-// Rutas para invitados (no autenticados)
-Route::middleware('guest')->group(function () {
-    Route::get('/login', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
-    Route::post('/login', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
+
+Route::any('/login', function (Request $request) {
+    return Redirect::away('https://app.espumasmedellin-litoral.com/dashboard');
 });
 
 // Ruta de cierre de sesión
