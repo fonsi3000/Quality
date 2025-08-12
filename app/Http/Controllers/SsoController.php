@@ -15,7 +15,7 @@ class SsoController extends Controller
     public function handle(Request $request)
     {
         // 1) sin slash final
-        $frontendUrl = 'https://app.espumasmedellin-litoral.com/';
+        $frontendUrl = 'https://app.espumasmedellin-litoral.com';
         $backendUrl  = config('app.url');
 
         $token = $request->query('token');
@@ -50,7 +50,7 @@ class SsoController extends Controller
             // 2) regenera la sesión
             $request->session()->regenerate();
 
-            return redirect()->intended("{$backendUrl}/dashboard");
+            return redirect()->route('dashboard');
         } catch (Exception $e) {
             return redirect()->away("{$frontendUrl}/dashboard?auth_error=invalid_token");
         }
