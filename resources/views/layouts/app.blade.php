@@ -125,13 +125,16 @@
         <!-- Scripts -->
         @stack('scripts')
         <script>
-            // Cierra la sesión en Laravel y redirige al dashboard del frontend
+            // URL fija del dashboard Angular
+            const DASHBOARD_URL = 'https://app.espumasmedellin-litoral.com/dashboard';
+
+            // Cierra la sesión en Laravel (si es posible) y redirige al dashboard del frontend
             async function logoutAndGoHome() {
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                const homeUrl = '{{ rtrim(env('ANGULAR_URL', 'http://localhost:4200'), '/') }}/dashboard';
 
                 try {
-                    await fetch('{{ route('logout') }}', {
+                    // Intento principal: POST /logout (CSRF)
+                    let res = await fetch('/logout', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -139,10 +142,15 @@
                         },
                         credentials: 'same-origin'
                     });
+
+                    // Fallback si solo aceptas GET
+                    if (!res.ok && res.status === 405) {
+                        await fetch('/logout', { method: 'GET', credentials: 'same-origin' });
+                    }
                 } catch (e) {
-                    // ignoramos errores de red; igual vamos a redirigir
+                    // Ignorar errores de red/timeouts: igual redirigimos
                 } finally {
-                    window.location.href = homeUrl;
+                    window.location.href = DASHBOARD_URL;
                 }
             }
 
@@ -178,13 +186,15 @@
                     const links = mobileMenu.getElementsByTagName('a');
                     Array.from(links).forEach(link => {
                         link.addEventListener('click', () => {
-                            HSOverlay.close(mobileMenu);
+                            if (typeof HSOverlay !== 'undefined') {
+                                HSOverlay.close(mobileMenu);
+                            }
                         });
                     });
                 }
             });
 
-            // Script para los acordeones
+            // Script para los acordeones (expansión según la ruta actual)
             document.addEventListener('DOMContentLoaded', function() {
                 // Verificar rutas
                 const isOrganizationRoute = {{ Request::routeIs('users.*') || Request::routeIs('units.*') || Request::routeIs('processes.*') || Request::routeIs('positions.*') ? 'true' : 'false' }};
