@@ -50,8 +50,7 @@ class SsoController extends Controller
             // 2) regenera la sesión
             $request->session()->regenerate();
 
-            // 3) usa ruta relativa para mantener el mismo host y no perder la cookie
-            return redirect()->intended('/dashboard');
+            return redirect()->intended("{$backendUrl}/dashboard");
         } catch (Exception $e) {
             return redirect()->away("{$frontendUrl}/dashboard?auth_error=invalid_token");
         }
