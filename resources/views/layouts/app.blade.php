@@ -125,7 +125,7 @@
         <!-- Scripts -->
         @stack('scripts')
         <script>
-            // URL fija del dashboard Angularr
+            // URL fija del dashboard Angular
             const DASHBOARD_URL = 'https://app.espumasmedellin-litoral.com/dashboard';
 
             // Cierra la sesión en Laravel (si es posible) y redirige al dashboard del frontend
