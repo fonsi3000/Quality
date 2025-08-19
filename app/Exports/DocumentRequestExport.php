@@ -16,14 +16,14 @@ class DocumentRequestExport implements FromView
      */
     public function view(): View
     {
-        $documentRequests = DocumentRequest::with(['process', 'documentType'])->whereHas('process', function ($q) {
+        $documentRequests = DocumentRequest::with(['process', 'documentType','user'])->whereHas('process', function ($q) {
             $usuarioActual = Auth::user();
             // traer id de la organizacion del usuario actual
             $unitId = $usuarioActual->unit_id;
             // traer el id de los procesos de la organizacion a la que pertenece el usuario
             $processIds = User::where('unit_id', $unitId)->pluck('process_id')->unique()->toArray();
             //procesos con documentos publicados
-            $q->whereIn('status', [DocumentRequest::STATUS_OBSOLETO, DocumentRequest::STATUS_PUBLICADO])->whereIn('id', $processIds);
+            $q->whereIn('status', [DocumentRequest::STATUS_OBSOLETO, DocumentRequest::STATUS_PUBLICADO, DocumentRequest::STATUS_RECHAZADO])->whereIn('id', $processIds);
         })->get();
 
         return view('exportDocuments', ['report' => $documentRequests]);

@@ -7,6 +7,9 @@
             <th>fecha de actualización</th>
             <th>proceso</th>
             <th>estado</th>
+            <th>fecha de creacion de la solicitud</th>
+            <th>Responsable de la solicitud</th>
+            <th>Estado de la solicitud</th>
         </tr>
     </thead>
     <tbody>
@@ -18,6 +21,9 @@
                 <td>{{$re->updated_at}}</td>
                 <td>{{$re->process->name}}</td>
                 <td>{{$re->status}}</td>
+                <td>{{$re->created_at}}</td>
+                <td>{{$re->user->name}}</td>
+                <td>Gestionada</td>
             </tr>
         @endforeach
     </tbody>
