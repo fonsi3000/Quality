@@ -2126,7 +2126,8 @@ class DocumentRequestController extends Controller
             $query = DocumentRequest::with(['user', 'documentType', 'responsible', 'assignedAgent', 'process'])
                 ->whereIn('status', [
                     DocumentRequest::STATUS_OBSOLETO,
-                    DocumentRequest::STATUS_PUBLICADO
+                    DocumentRequest::STATUS_PUBLICADO,
+                    DocumentRequest::STATUS_RECHAZADO
                 ]);
 
             // Filtrar por proceso si el usuario no es admin
