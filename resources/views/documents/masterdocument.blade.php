@@ -16,7 +16,7 @@
         <div class="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-xl p-4">
             <form id="filter-form" action="{{ route('documents.masterdocument') }}" method="GET">
                 @csrf
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <!-- Búsqueda por texto -->
                     <div>
                         <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
@@ -61,7 +61,7 @@
                     </div>
 
                     <!-- Rango de Fechas -->
-                    <div>
+                    {{-- <div>
                         <label for="date_from" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Desde
                         </label>
@@ -75,7 +75,7 @@
                         </label>
                         <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}"
                             class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400">
-                    </div>
+                    </div> --}}
                 </div>
 
                 <!-- Botones de Acción -->

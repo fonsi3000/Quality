@@ -111,7 +111,7 @@
                     @endcanany
 
                     <!-- Gestión de Documentos Submenu -->
-                    <div class="hs-accordion" id="doc-management-accordion">
+                    {{-- <div class="hs-accordion" id="doc-management-accordion">
                         <button type="button" 
                                 class="hs-accordion-toggle w-full flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg">
                             Gestión de Documentos
@@ -145,7 +145,7 @@
                                 @endcanany
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <!-- Ajustes de Documentos Submenu -->
                     @canany(['admin.only'])
@@ -165,10 +165,10 @@
                                     Tipos de Documentos
                                 </a>
 
-                                <a href="{{ route('document-templates.index') }}" 
+                                {{-- <a href="{{ route('document-templates.index') }}" 
                                     class="flex items-center gap-x-3.5 py-2.5 px-3 text-sm font-medium {{ Request::routeIs('document-templates.*') ? 'text-gray-700 bg-gray-100 dark:bg-neutral-700 dark:text-white' : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 dark:text-neutral-300' }} rounded-lg">
                                     Plantillas de Documentos
-                                </a>
+                                </a> --}}
                             </div>
                         </div>
                     </div>

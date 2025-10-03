@@ -11,9 +11,23 @@
         </h1>
         
     </div>
+
+    <!-- Botón Nueva Solicitud -->
+    <div>
+        <a href="{{ route('documents.requests.create') }}" 
+            class="w-full sm:w-auto inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 py-2 px-3">
+                <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                    <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+                    <line x1="12" y1="11" x2="12" y2="17"/>
+                    <line x1="9" y1="14" x2="15" y2="14"/>
+                </svg>
+                Nueva Solicitud
+        </a>
+    </div>
     <div class="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-xl p-4">
         <form id="filter-form" action="{{ route('documents.published') }}" method="GET">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Búsqueda por texto -->
                 <div>
                     <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
@@ -82,7 +96,7 @@
                 </div>
 
                 <!-- Añadir estos elementos dentro del div de la grid en documentos publicados -->
-                <div>
+                {{-- <div>
                     <label for="date_from" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         fecha de carga (desde)
                     </label>
@@ -91,9 +105,9 @@
                         id="date_from"
                         value="{{ request('date_from') }}"
                         class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400">
-                </div>
+                </div> --}}
 
-                <div>
+                {{-- <div>
                     <label for="date_to" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         fecha de carga (Hasta)
                     </label>
@@ -102,7 +116,7 @@
                         id="date_to"
                         value="{{ request('date_to') }}"
                         class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-400">
-                </div>
+                </div> --}}
             </div>
     
             <!-- Botones de Acción -->

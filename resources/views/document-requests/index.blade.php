@@ -605,52 +605,6 @@
                                 </div>
                             </div>
                             @endif
-
-                            {{-- <!-- Historial de Versiones -->
-                            @if($request->hasReferenceDocument() || $request->hasReferencingDocuments())
-                            <div class="mt-4">
-                                <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                    Historial de Versiones
-                                </h5>
-                                <div class="space-y-3">
-                                    @foreach($request->getVersionHistory() as $version)
-                                    <div class="p-3 rounded-lg bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex flex-col">
-                                                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                                    Versión {{ $version->version }}
-                                                </span>
-                                                <span class="text-xs text-gray-500">
-                                                    {{ $version->created_at->format('d/m/Y H:i') }}
-                                                </span>
-                                            </div>
-                                            <div class="flex items-center gap-3">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ match($version->status) {
-                                                    'publicado' => 'bg-green-100 text-green-800',
-                                                    'rechazado', 'rechazado_lider' => 'bg-red-100 text-red-800',
-                                                    'sin_aprobar', 'pendiente_lider' => 'bg-yellow-100 text-yellow-800',
-                                                    'en_elaboracion' => 'bg-blue-100 text-blue-800',
-                                                    'revision' => 'bg-purple-100 text-purple-800',
-                                                    'obsoleto' => 'bg-gray-100 text-gray-800',
-                                                    default => 'bg-gray-100 text-gray-800'
-                                                } }}">
-                                                    {{ $version->getStatusLabel() }}
-                                                </span>
-                                                <a href="{{ route('documents.requests.preview', $version->id) }}"
-                                                   target="_blank"
-                                                   class="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400">
-                                                    <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                                    </svg>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                            @endif --}}
                         </div>
                     </div>
                 </div>
