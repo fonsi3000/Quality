@@ -7,6 +7,7 @@ use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\User;
 use App\Models\Process;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -146,29 +147,14 @@ class DocumentRequestController extends Controller
         try {
             $documentTypes = DocumentType::where('is_active', true)->get();
             $users = User::where('active', true)->get();
+            $processes = Process::all();
+            
 
             // Cargar el usuario autenticado con sus procesos (principal y secundario)
-            $user = Auth::user()->load(['process:id,name', 'secondaryProcess:id,name']);
-
-
-            // Obtener documentos publicados filtrados por proceso si es rol "user"
-            $publishedDocuments = DocumentRequest::with(['documentType'])
-                ->where('status', DocumentRequest::STATUS_PUBLICADO)
-                ->when($user->hasRole('user'), function ($query) use ($user) {
-                    $query->whereHas('user', function ($q) use ($user) {
-                        $q->whereIn('process_id', [$user->process_id, $user->second_process_id]);
-                    });
-                })
-                ->get();
-
-            // Debug para ver la estructura exacta
-            Log::info('Documentos publicados:', [
-                'count' => $publishedDocuments->count(),
-                'first_doc' => $publishedDocuments->first()
-            ]);
+            $user = Auth::user();
 
             // Pasamos el usuario a la vista también
-            return view('document-requests.create', compact('documentTypes', 'users', 'publishedDocuments', 'user'));
+            return view('document-requests.create', compact('documentTypes', 'users', 'user','processes'));
         } catch (\Exception $e) {
             Log::error('Error en create DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -192,105 +178,56 @@ class DocumentRequestController extends Controller
             ]);
         }
 
+        if (!$request->hasFile('document')) {
+                throw new \Exception('No se ha proporcionado ningún archivo');
+        }
+
+
         // Validación principal del formulario
         $validated = $request->validate([
-            'request_type' => 'required|in:create,modify,obsolete',
             'document' => 'required|file|max:102400|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
             'description' => 'required|string',
-            'document_type_id' => $request->request_type === 'create' ? 'required|exists:document_types,id' : 'nullable',
-            'document_name' => $request->request_type === 'create' ? 'required|string|max:255' : 'nullable',
-            'existing_document_id' => in_array($request->request_type, ['modify', 'obsolete']) ? 'required|exists:document_requests,id' : 'nullable',
-            'created_at' => 'required|date',
-            // 🔁 Aquí corregimos: se valida origin_process (no process_id)
-            'origin_process' => 'required|exists:processes,id',
+            'document_type_id' => 'required|exists:document_types,id',
+            'document_name' => 'required|string|max:255',
+            'user_id' => 'required|string|max:255',
+            'process_id' => 'required|string',
+            'created_at' => 'required|date'
         ]);
+
+        $process_origin = Process::where('id','=',$validated['process_id'])->first();
+
+        if(!$process_origin){
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'El proceso no existe en los registros');
+        }
 
         try {
             DB::beginTransaction();
-
-            // Traer usuario con relaciones
-            $user = User::with(['process', 'secondaryProcess'])->find(Auth::id());
-
-            // 🔁 Aquí usamos el valor del select: origin_process
-            $selectedProcessId = $validated['origin_process'];
-
-            // Validar que el proceso pertenece al usuario autenticado
-            if (!in_array($selectedProcessId, [$user->process_id, $user->second_process_id])) {
-                throw new \Exception('No tiene permiso para enviar solicitudes a ese proceso.');
-            }
-
-            // Obtener el proceso seleccionado
-            $selectedProcess = Process::findOrFail($selectedProcessId);
-
-            // Validar que tenga líder asignado
-            if (!$selectedProcess->leader_id) {
-                throw new \Exception(self::MESSAGE_ERROR_LEADER_PROCESS);
-            }
-
-            // Validar que se haya enviado el archivo
-            if (!$request->hasFile('document')) {
-                throw new \Exception('No se ha proporcionado ningún archivo');
-            }
-
-            // Asignación del responsable según el dominio del correo
-            $emailParts = explode('@', $user->email);
-            $domain = isset($emailParts[1]) ? $emailParts[1] : '';
-
-            $responsibleEmail = match ($domain) {
-                'espumadosdellitoral.com.co' => 'lider.calidad@espumadosdellitoral.com.co',
-                'espumasmedellin.com.co' => 'lider.calidad@espumasmedellin.com.co',
-                default => collect([
-                    'lider.calidad@espumadosdellitoral.com.co',
-                    'lider.calidad@espumasmedellin.com.co'
-                ])->random()
-            };
-
-            $responsible = User::where('email', $responsibleEmail)->first();
-            if (!$responsible) {
-                throw new \Exception('No se encontró un líder de calidad responsable.');
-            }
-
             // Guardar archivo y obtener ruta
-            $path = $this->handleFileStorage($request->file('document'));
+            $file = $request->file('document');
+            $fileName = 'final_' . Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('documents/final', $fileName, 'public');
+
+            
 
             // Datos base comunes a cualquier tipo de solicitud
             $documentData = [
-                'request_type' => $validated['request_type'],
-                'user_id' => Auth::id(),
-                'document_path' => $path,
+                'user_id' =>$validated['user_id'],
+                'final_document_path' => $path,
                 'description' => $validated['description'],
                 // 🔁 Aquí guardamos ambos: nombre como 'origin', id como 'process_id'
-                'process_id' => $selectedProcess->id,
-                'origin' => $selectedProcess->name,
-                'responsible_id' => $responsible->id,
-                'destination' => 'Calidad',
+                'process_id' => $validated['process_id'],
+                'origin' => $process_origin->name,
+                'assigned_agent_id' => Auth::user()->id,
+                'document_type_id' => $validated['document_type_id'],
+                'document_name' => $validated['document_name'],
+                'status' => DocumentRequest::STATUS_PUBLICADO
             ];
-
-            // Si es modify u obsolete, se toma info del documento referenciado
-            if (in_array($validated['request_type'], ['modify', 'obsolete'])) {
-                $existingDocument = DocumentRequest::findOrFail($validated['existing_document_id']);
-
-                if (!$existingDocument || $existingDocument->status !== DocumentRequest::STATUS_PUBLICADO) {
-                    throw new \Exception('El documento seleccionado no está disponible para ' .
-                        ($validated['request_type'] === 'modify' ? 'modificación' : 'obsoletización'));
-                }
-
-                $documentData = array_merge($documentData, [
-                    'document_type_id' => $existingDocument->document_type_id,
-                    'document_name' => $existingDocument->document_name,
-                    'reference_document_id' => $existingDocument->id,
-                ]);
-            } else {
-                // Si es tipo "create", se toman los campos del formulario
-                $documentData = array_merge($documentData, [
-                    'document_type_id' => $validated['document_type_id'],
-                    'document_name' => $validated['document_name'],
-                ]);
-            }
 
             // Crear instancia del modelo y establecer estado inicial
             $documentRequest = new DocumentRequest($documentData);
-            $documentRequest->setInitialStatus();
             $documentRequest->created_at = $validated['created_at']; // fecha personalizada
             $documentRequest->save();
 
@@ -299,16 +236,15 @@ class DocumentRequestController extends Controller
             // Log exitoso
             Log::info('Solicitud de documento creada exitosamente', [
                 'document_request_id' => $documentRequest->id,
-                'type' => $validated['request_type'],
                 'status' => $documentRequest->status,
-                'user_id' => Auth::id(),
-                'process_id' => $selectedProcess->id,
-                'responsible_id' => $responsible->id,
+                'user_id' => $validated['user_id'],
+                'process_id' => $validated['process_id'],
+                'assigned_agent_id' => Auth::user()->id,
                 'created_at' => $validated['created_at']
             ]);
 
             return redirect()
-                ->route('documents.requests.index')
+                ->route('documents.published')
                 ->with('success', self::MESSAGE_SUCCESS_CREATE);
         } catch (\Exception $e) {
             DB::rollBack();

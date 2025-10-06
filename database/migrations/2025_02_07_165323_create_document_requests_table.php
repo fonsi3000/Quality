@@ -16,11 +16,11 @@ return new class extends Migration
                 'create',
                 'modify',
                 'obsolete'
-            ]);
+            ])->nullable();
             $table->string('document_name'); // Nombre del documento
             $table->text('description')->nullable(); // Descripción del documento
             $table->string('origin'); // Origen del documento
-            $table->string('destination')->default('Calidad'); // Destino del documento
+            $table->string('destination')->nullable(); // Destino del documento
 
             // Nuevo campo para público/privado
             $table->boolean('is_public')->default(false); // false = privado, true = público
