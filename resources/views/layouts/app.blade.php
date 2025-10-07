@@ -28,27 +28,30 @@
     <body class="bg-gray-50 dark:bg-neutral-900">
         <div class="flex h-full">
             <!-- Sidebar -->
-            <aside class="fixed top-0 left-0 z-40 w-80 h-screen transition-transform -translate-x-full lg:translate-x-0">
-                <div class="h-full px-4 py-6 overflow-y-auto bg-white dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700">
-                    <!-- Logo -->
-                    <div class="flex items-center justify-center mb-4">
-                        <a href="#" class="flex items-center">
-                            <img src="{{ asset('images/logo.png') }}" class="h-16 w-auto" alt="Logo">
-                        </a>
-                    </div>
+                @can('admin.only')
+                <aside class="fixed top-0 left-0 z-40 w-80 h-screen transition-transform -translate-x-full lg:translate-x-0">
+                    <div class="h-full px-4 py-6 overflow-y-auto bg-white dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700">
+                        <!-- Logo -->
+                        <div class="flex items-center justify-center mb-4">
+                            <a href="#" class="flex items-center">
+                                <img src="{{ asset('images/logo.png') }}" class="h-16 w-auto" alt="Logo">
+                            </a>
+                        </div>
 
-                    <!-- Navigation -->
-                    @include('layouts.menu')
-                </div>
-            </aside>
+                        <!-- Navigation -->
+                        @include('layouts.menu')
+                    </div>
+                </aside>
+                @endcan
 
             <!-- Content Area -->
-            <div class="lg:ml-80 flex flex-col flex-1">
+            <div class="{{ Auth::user()->can('admin.only') ? 'lg:ml-80' : '' }} flex flex-col flex-1">
                 <!-- Top Navbar -->
                 <nav class="bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
                     <div class="px-4 py-3 lg:px-6">
                         <div class="flex items-center justify-between">
-                            <!-- Mobile Menu Button -->
+                            <!-- Mobile Menu Button - solo para admins -->
+                            @can('admin.only')
                             <button type="button" 
                                     class="lg:hidden inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-neutral-300 dark:hover:bg-neutral-700" 
                                     data-hs-overlay="#mobile-menu"
@@ -58,13 +61,14 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                             </button>
+                            @endcan
 
                             <!-- Search Bar -->
-                            <div class="hidden md:block flex-1 max-w-md ml-4">
+                            <div class="hidden md:block flex-1 max-w-md {{ Auth::user()->can('admin.only') ? 'ml-4' : '' }}">
                             </div>
 
                             <!-- Right Navigation Items -->
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3 {{ Auth::user()->can('admin.only') ? '' : 'ml-auto' }}">
                                 <!-- Notifications -->
                                 <button type="button" class="p-2 text-gray-600 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-neutral-300 dark:hover:bg-neutral-700">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
