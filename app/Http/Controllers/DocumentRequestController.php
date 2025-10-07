@@ -8,6 +8,7 @@ use App\Models\DocumentType;
 use App\Models\User;
 use App\Models\Process;
 use App\Models\Unit;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
