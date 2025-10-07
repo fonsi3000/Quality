@@ -2236,11 +2236,10 @@ class DocumentRequestController extends Controller
         }
 }
 
-    public function obsolete(Request $request, String $id){
+    public function obsolete(String $id){
 
         try{
 
-        // Si está publicado, solo un admin puede editarlo
         if (!Auth::user()->hasRole('admin')) {
             throw new \Exception('No tienes permiso para obsoletizar este documento');
         }
@@ -2254,27 +2253,6 @@ class DocumentRequestController extends Controller
         if ($documentRequest->status != 'publicado'){
             throw new \Exception('El documento que intentas obsoletizar no esta publicado');
         }
-
-        $request->validate([ 
-            'document' => 'required|file|max:102400|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip'
-        ]);
-
-        $file = $request->file('document');
-        $fileName = 'final_' . Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('documents/final', $fileName, 'public');
-
-        $documentRequestNew = new DocumentRequest();
-        $documentRequestNew -> user_id = $documentRequest -> user_id;
-        $documentRequestNew -> description = $documentRequest -> description;
-        $documentRequestNew -> process_id = $documentRequest -> process_id;
-        $documentRequestNew -> origin = $documentRequest -> origin;
-        $documentRequestNew -> assigned_agent_id = $documentRequest -> assigned_agent_id;
-        $documentRequestNew -> document_type_id = $documentRequest -> document_type_id;
-        $documentRequestNew -> document_name = $documentRequest -> document_name;
-        $documentRequestNew -> version = $documentRequest -> version + 1;
-        $documentRequestNew -> final_document_path = $path;
-        $documentRequestNew -> status = DocumentRequest::STATUS_PUBLICADO;
-        $documentRequestNew -> save();
         
         $documentRequest -> update([
             'status' => DocumentRequest::STATUS_OBSOLETO
@@ -2304,4 +2282,63 @@ class DocumentRequestController extends Controller
     }
     
 }
+
+public function newVersion(Request $request, String $id){
+try{
+
+        if (!Auth::user()->hasRole('admin')) {
+            throw new \Exception('No tienes permiso para obsoletizar este documento');
+        }
+
+        $documentRequest = DocumentRequest::find($id);
+
+        if(!$documentRequest){
+            throw new \Exception('El documento que intentas obsoletizar no existe');
+        }
+
+        if ($documentRequest->status != 'publicado'){
+            throw new \Exception('El documento que intentas obsoletizar no esta publicado');
+        }
+
+        $file = $request->file('document');
+        $fileName = 'final_' . Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('documents/final', $fileName, 'public');
+
+        $documentRequestNew = new DocumentRequest();
+        $documentRequestNew -> user_id = $documentRequest -> user_id;
+        $documentRequestNew -> description = $documentRequest -> description;
+        $documentRequestNew -> process_id = $documentRequest -> process_id;
+        $documentRequestNew -> origin = $documentRequest -> origin;
+        $documentRequestNew -> assigned_agent_id = $documentRequest -> assigned_agent_id;
+        $documentRequestNew -> document_type_id = $documentRequest -> document_type_id;
+        $documentRequestNew -> document_name = $documentRequest -> document_name;
+        $documentRequestNew -> version = $documentRequest -> version + 1;
+        $documentRequestNew -> final_document_path = $path;
+        $documentRequestNew -> status = DocumentRequest::STATUS_PUBLICADO;
+        $documentRequestNew -> save();
+
+        $documentRequest->save();
+
+        return redirect()
+                ->route('documents.published')
+                ->with('success', self::MESSAGE_SUCCESS_OBSOLETE);
+    }catch(\Exception $e){
+
+        if (isset($path) && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            Log::error('Error al OBSOLETIZAR DOCUMENTO', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', "Hubo un error inesperado");
+
+    }
+}
+
 }
