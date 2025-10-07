@@ -148,13 +148,13 @@ class DocumentRequestController extends Controller
             $documentTypes = DocumentType::where('is_active', true)->get();
             $users = User::where('active', true)->get();
             $processes = Process::all();
-            
+
 
             // Cargar el usuario autenticado con sus procesos (principal y secundario)
             $user = Auth::user();
 
             // Pasamos el usuario a la vista también
-            return view('document-requests.create', compact('documentTypes', 'users', 'user','processes'));
+            return view('document-requests.create', compact('documentTypes', 'users', 'user', 'processes'));
         } catch (\Exception $e) {
             Log::error('Error en create DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -179,7 +179,7 @@ class DocumentRequestController extends Controller
         }
 
         if (!$request->hasFile('document')) {
-                throw new \Exception('No se ha proporcionado ningún archivo');
+            throw new \Exception('No se ha proporcionado ningún archivo');
         }
 
 
@@ -194,9 +194,9 @@ class DocumentRequestController extends Controller
             'created_at' => 'required|date'
         ]);
 
-        $process_origin = Process::where('id','=',$validated['process_id'])->first();
+        $process_origin = Process::where('id', '=', $validated['process_id'])->first();
 
-        if(!$process_origin){
+        if (!$process_origin) {
             return redirect()
                 ->back()
                 ->withInput()
@@ -210,11 +210,11 @@ class DocumentRequestController extends Controller
             $fileName = 'final_' . Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('documents/final', $fileName, 'public');
 
-            
+
 
             // Datos base comunes a cualquier tipo de solicitud
             $documentData = [
-                'user_id' =>$validated['user_id'],
+                'user_id' => $validated['user_id'],
                 'final_document_path' => $path,
                 'description' => $validated['description'],
                 // 🔁 Aquí guardamos ambos: nombre como 'origin', id como 'process_id'
@@ -348,9 +348,9 @@ class DocumentRequestController extends Controller
             }
 
             $documentTypes = DocumentType::where('is_active', true)->get();
-            $users = User::where('active', true)->get();
+            $processes = Process::all(); // Agregar todos los procesos
 
-            return view('document-requests.edit', compact('documentRequest', 'documentTypes', 'users'));
+            return view('document-requests.edit', compact('documentRequest', 'documentTypes', 'processes'));
         } catch (\Exception $e) {
             Log::error('Error en edit DocumentRequest', [
                 'error' => $e->getMessage(),
@@ -534,9 +534,9 @@ class DocumentRequestController extends Controller
                 throw new \Exception(self::MESSAGE_ERROR_FILE);
             }
 
-            
+
             // Limpiar el nombre del documento para evitar caracteres especiales
-            $baseName  = $documentRequest->document_name; 
+            $baseName  = $documentRequest->document_name;
             $extension = pathinfo($documentRequest->document_path, PATHINFO_EXTENSION);
             $filename = $baseName . '.' . $extension;
 
@@ -2143,7 +2143,8 @@ class DocumentRequestController extends Controller
         }
     }
 
-    public function exportExcel(){
+    public function exportExcel()
+    {
         return Excel::download(new DocumentRequestExport, 'documentMaster.xlsx');
     }
 
@@ -2175,6 +2176,63 @@ class DocumentRequestController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()->with('error', 'No se pudo cambiar la visibilidad del documento.');
+        }
+    }
+
+    public function getProcessLeaders(Request $request)
+    {
+        try {
+            $processId = $request->input('process_id');
+
+            if (!$processId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID de proceso no proporcionado'
+                ], 400);
+            }
+
+            $process = Process::with(['leader', 'secondLeader'])->find($processId);
+
+            if (!$process) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Proceso no encontrado'
+                ], 404);
+            }
+
+            $leaders = [];
+
+            if ($process->leader) {
+                $leaders[] = [
+                    'id' => $process->leader->id,
+                    'name' => $process->leader->name,
+                    'role' => 'Líder Principal'
+                ];
+            }
+
+            if ($process->secondLeader) {
+                $leaders[] = [
+                    'id' => $process->secondLeader->id,
+                    'name' => $process->secondLeader->name,
+                    'role' => 'Segundo Líder'
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'leaders' => $leaders
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener líderes del proceso', [
+                'error' => $e->getMessage(),
+                'process_id' => $request->input('process_id'),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los líderes'
+            ], 500);
         }
     }
 }

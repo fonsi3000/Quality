@@ -13,6 +13,7 @@
     </div>
 
     <!-- Botón Nueva Solicitud -->
+    @can('admin.only')
     <div>
         <a href="{{ route('documents.requests.create') }}" 
             class="w-full sm:w-auto inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 py-2 px-3">
@@ -25,6 +26,7 @@
                 Nueva Solicitud
         </a>
     </div>
+    @endcan
     <div class="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-xl p-4">
         <form id="filter-form" action="{{ route('documents.published') }}" method="GET">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

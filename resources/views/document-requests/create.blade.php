@@ -63,12 +63,12 @@
 
                                     <select id="user_id" name="user_id"
                                         class="py-2 px-3 block w-full border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
-                                        required>
-                                        <option value="">Seleccione un usuario</option>
-                                        @foreach ($users as $user)
-                                            <option value={{ $user->id }}>{{ $user->name }}</option>
-                                        @endforeach
+                                        required disabled>
+                                        <option value="">Primero seleccione un proceso</option>
                                     </select>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Los líderes del proceso aparecerán aquí automáticamente
+                                    </p>
                                 </div>
                                 <!-- Documento Existente (Solo para modificar/obsoletizar) -->
                                 <div id="existing_document_section" class="space-y-2 hidden">
@@ -200,46 +200,98 @@
 
 
     @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Elementos del DOM
-                const form = document.getElementById('documentForm');
-                const documentTypeSelect = document.getElementById('document_type_id');
-                const documentNameInput = document.getElementById('document_name');
-                const descriptionTextarea = document.getElementById('description');
-                const process_id
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const form = document.getElementById('documentForm');
+            const documentTypeSelect = document.getElementById('document_type_id');
+            const documentNameInput = document.getElementById('document_name');
+            const descriptionTextarea = document.getElementById('description');
+            const processSelect = document.getElementById('process_id');
+            const userSelect = document.getElementById('user_id');
 
-                // Validación del formulario antes de enviar
-                form.addEventListener('submit', function(e) {
+            // Cargar líderes cuando cambia el proceso
+            processSelect.addEventListener('change', function() {
+                const processId = this.value;
+                
+                // Limpiar y deshabilitar el select de usuario
+                userSelect.innerHTML = '<option value="">Cargando líderes...</option>';
+                userSelect.disabled = true;
+                
+                if (!processId) {
+                    userSelect.innerHTML = '<option value="">Primero seleccione un proceso</option>';
+                    return;
+                }
 
-
-                    if (!documentTypeSelect.value || !documentNameInput.value) {
-                        e.preventDefault();
-                        alert('Por favor complete todos los campos requeridos');
-                        return;
+                // Hacer petición para obtener líderes del proceso
+                fetch(`{{ route('documents.requests.process-leaders') }}?process_id=${processId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
                     }
-
-                    // Validación de la descripción
-                    if (!descriptionTextarea.value.trim()) {
-                        e.preventDefault();
-                        alert('Por favor ingrese una descripción');
-                        return;
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.leaders.length > 0) {
+                        // Llenar el select con los líderes
+                        userSelect.innerHTML = '<option value="">Seleccione un líder</option>';
+                        data.leaders.forEach(leader => {
+                            const option = document.createElement('option');
+                            option.value = leader.id;
+                            option.textContent = `${leader.name} (${leader.role})`;
+                            userSelect.appendChild(option);
+                        });
+                        userSelect.disabled = false;
+                    } else {
+                        userSelect.innerHTML = '<option value="">Este proceso no tiene líderes asignados</option>';
                     }
+                })
+                .catch(error => {
+                    console.error('Error al cargar líderes:', error);
+                    userSelect.innerHTML = '<option value="">Error al cargar líderes</option>';
                 });
+            });
 
-                // Mostrar nombre del archivo seleccionado
-                document.getElementById('document').addEventListener('change', function(e) {
-                    const fileName = e.target.files[0]?.name;
-                    document.getElementById('file-selected').textContent = fileName ?
-                        `Archivo seleccionado: ${fileName}` : '';
-                });
+            // Validación del formulario antes de enviar
+            form.addEventListener('submit', function(e) {
+                // Validar proceso
+                if (!processSelect.value) {
+                    e.preventDefault();
+                    alert('Por favor seleccione un proceso');
+                    return;
+                }
 
-                // Ejecutar la función de cambio si hay un tipo de solicitud seleccionado inicialmente
-                if (requestTypeSelect.value) {
-                    requestTypeSelect.dispatchEvent(new Event('change'));
+                // Validar usuario solicitante
+                if (!userSelect.value) {
+                    e.preventDefault();
+                    alert('Por favor seleccione un líder como solicitante');
+                    return;
+                }
+
+                // Validar tipo de documento y nombre
+                if (!documentTypeSelect.value || !documentNameInput.value) {
+                    e.preventDefault();
+                    alert('Por favor complete todos los campos requeridos');
+                    return;
+                }
+
+                // Validación de la descripción
+                if (!descriptionTextarea.value.trim()) {
+                    e.preventDefault();
+                    alert('Por favor ingrese una descripción');
+                    return;
                 }
             });
-        </script>
+
+            // Mostrar nombre del archivo seleccionado
+            document.getElementById('document').addEventListener('change', function(e) {
+                const fileName = e.target.files[0]?.name;
+                document.getElementById('file-selected').textContent = fileName ?
+                    `Archivo seleccionado: ${fileName}` : '';
+            });
+        });
+    </script>
     @endpush
 
 @endsection
