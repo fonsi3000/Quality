@@ -23,7 +23,7 @@
                     <line x1="12" y1="11" x2="12" y2="17"/>
                     <line x1="9" y1="14" x2="15" y2="14"/>
                 </svg>
-                Nueva Solicitud
+                Nuevo Documento
         </a>
     </div>
     @endcan
@@ -381,6 +381,19 @@
                                 </div>
                             </div>
                         </div>
+                          @can('admin.only')
+                                        <div>
+                                            <button type="button" data-hs-overlay="#modal-obsoletizar-{{ $request->id }}"
+                                                class="w-full inline-flex justify-center items-center gap-x-2 px-4 py-2 text-sm font-semibold rounded-lg border border-transparent bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 transition-colors">
+                                                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                Obsoletizar Documento
+                                            </button>
+                                        </div>
+                                    @endcan
                     </div>
 
                     <!-- Columna Derecha -->
@@ -673,9 +686,106 @@
                     Cerrar
                 </button>
             </div>
+            </div>
         </div>
     </div>
-</div>
+@endforeach
+<!--Modal Obsoletizar-->
+@foreach ($documentRequests as $request)
+    <div id="modal-obsoletizar-{{ $request->id }}"
+        class="hs-overlay hidden w-full h-full fixed top-0 start-0 z-[70] overflow-x-hidden overflow-y-auto">
+        <div
+            class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-lg sm:w-full m-3 sm:mx-auto">
+            <div
+                class="relative flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700">
+                
+                <!-- Header -->
+                <div class="flex justify-between items-center py-3 px-4 border-b dark:border-neutral-700">
+                    <h3 class="font-bold text-gray-800 dark:text-white">
+                        Obsoletizar Documento
+                    </h3>
+                    <button type="button"
+                        class="inline-flex items-center justify-center size-8 text-sm font-semibold rounded-lg border border-transparent text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-gray-700"
+                        data-hs-overlay="#modal-obsoletizar-{{ $request->id }}">
+                        <span class="sr-only">Cerrar</span>
+                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <form action="{{ route('documents.obsolete', $request->id) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PATCH')
+                    
+                    <div class="p-4 overflow-y-auto">
+                        <!-- Advertencia -->
+                        <div class="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg dark:bg-orange-900/20 dark:border-orange-800">
+                            <div class="flex items-start gap-3">
+                                <svg class="size-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" 
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-orange-800 dark:text-orange-300 mb-1">
+                                        Advertencia
+                                    </h4>
+                                    <p class="text-sm text-orange-700 dark:text-orange-400">
+                                        Esta acción marcará el documento como obsoleto.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del documento -->
+                        <div class="mb-4 p-3 bg-gray-50 rounded-lg dark:bg-neutral-700">
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Documento:</p>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                {{ $request->document_name }} (v{{ $request->version }})
+                            </p>
+                        </div>
+
+                        <!-- Campo de archivo -->
+                        <div class="mb-4">
+                            <label for="document" 
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                                Documento de justificación <span class="text-red-500">*</span>
+                            </label>
+                            <input type="file" 
+                                name="document" 
+                                id="document"
+                                required
+                                class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/50 dark:file:text-blue-400">
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="flex justify-end items-center gap-x-2 py-3 px-4 border-t dark:border-neutral-700">
+                        <button type="button"
+                            data-hs-overlay="#modal-obsoletizar-{{ $request->id }}"
+                            class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 disabled:pointer-events-none">
+                            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Confirmar Obsolescencia
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endforeach
 </div>
 @endsection
