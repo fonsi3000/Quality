@@ -8,6 +8,7 @@ use App\Models\DocumentType;
 use App\Models\User;
 use App\Models\Process;
 use App\Models\Unit;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,7 @@ class DocumentRequestController extends Controller
     private const MESSAGE_ERROR_FILE = 'El archivo no se encuentra disponible.';
     private const MESSAGE_ERROR_GENERIC = 'Ha ocurrido un error. Por favor, intente nuevamente.';
     private const MESSAGE_SUCCESS_FINAL_DOCUMENT = 'Documento final adjuntado exitosamente.';
+    private const MESSAGE_SUCCESS_OBSOLETE = "Documento obsoletizado correctamente";
 
     // Constantes para mensajes de líder
     private const MESSAGE_SUCCESS_LEADER_APPROVE = 'Solicitud aprobada por el líder exitosamente.';
@@ -365,7 +367,6 @@ class DocumentRequestController extends Controller
     public function update(Request $request, DocumentRequest $documentRequest)
     {
         $validated = $request->validate([
-            'request_type' => 'required|in:create,modify',
             'document_type_id' => 'required|exists:document_types,id',
             'document_name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -412,7 +413,6 @@ class DocumentRequestController extends Controller
 
             // Actualización general de campos
             $documentRequest->update([
-                'request_type' => $validated['request_type'],
                 'document_type_id' => $validated['document_type_id'],
                 'document_name' => $validated['document_name'],
                 'description' => $validated['description'],
@@ -2176,4 +2176,130 @@ class DocumentRequestController extends Controller
             return redirect()->back()->with('error', 'No se pudo cambiar la visibilidad del documento.');
         }
     }
+
+    public function getProcessLeaders(Request $request)
+    {
+        try {
+            $processId = $request->input('process_id');
+
+            if (!$processId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID de proceso no proporcionado'
+                ], 400);
+            }
+
+            $process = Process::with(['leader', 'secondLeader'])->find($processId);
+
+            if (!$process) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Proceso no encontrado'
+                ], 404);
+            }
+
+            $leaders = [];
+
+            if ($process->leader) {
+                $leaders[] = [
+                    'id' => $process->leader->id,
+                    'name' => $process->leader->name,
+                    'role' => 'Líder Principal'
+                ];
+            }
+
+            if ($process->secondLeader) {
+                $leaders[] = [
+                    'id' => $process->secondLeader->id,
+                    'name' => $process->secondLeader->name,
+                    'role' => 'Segundo Líder'
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'leaders' => $leaders
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener líderes del proceso', [
+                'error' => $e->getMessage(),
+                'process_id' => $request->input('process_id'),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los líderes'
+            ], 500);
+        }
+    }
+
+    public function obsolete(Request $request, String $id){
+
+        try{
+
+        // Si está publicado, solo un admin puede editarlo
+        if (!Auth::user()->hasRole('admin')) {
+            throw new \Exception('No tienes permiso para obsoletizar este documento');
+        }
+
+        $documentRequest = DocumentRequest::find($id);
+
+        if(!$documentRequest){
+            throw new \Exception('El documento que intentas obsoletizar no existe');
+        }
+
+        if ($documentRequest->status != 'publicado'){
+            throw new \Exception('El documento que intentas obsoletizar no esta publicado');
+        }
+
+        $request->validate([ 
+            'document' => 'required|file|max:102400|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip'
+        ]);
+
+        $file = $request->file('document');
+        $fileName = 'final_' . Str::uuid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('documents/final', $fileName, 'public');
+
+        $documentRequestNew = new DocumentRequest();
+        $documentRequestNew -> user_id = $documentRequest -> user_id;
+        $documentRequestNew -> description = $documentRequest -> description;
+        $documentRequestNew -> process_id = $documentRequest -> process_id;
+        $documentRequestNew -> origin = $documentRequest -> origin;
+        $documentRequestNew -> assigned_agent_id = $documentRequest -> assigned_agent_id;
+        $documentRequestNew -> document_type_id = $documentRequest -> document_type_id;
+        $documentRequestNew -> document_name = $documentRequest -> document_name;
+        $documentRequestNew -> version = $documentRequest -> version + 1;
+        $documentRequestNew -> final_document_path = $path;
+        $documentRequestNew -> status = DocumentRequest::STATUS_PUBLICADO;
+        $documentRequestNew -> save();
+        
+        $documentRequest -> update([
+            'status' => DocumentRequest::STATUS_OBSOLETO
+        ]);
+
+        $documentRequest->save();
+
+        return redirect()
+                ->route('documents.published')
+                ->with('success', self::MESSAGE_SUCCESS_OBSOLETE);
+    }catch(Exception $e){
+
+        if (isset($path) && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            Log::error('Error al OBSOLETIZAR DOCUMENTO', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', "Hubo un error inesperado");
+
+    }
+    
+}
 }

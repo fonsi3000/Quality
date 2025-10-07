@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Nueva Solicitud de Documento')
+@section('title', 'Nuevo Documento')
 
 @section('content')
     <div class="flex flex-col">
@@ -23,10 +23,10 @@
                         <!-- Encabezado -->
                         <div class="mb-8">
                             <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
-                                Nueva Solicitud de Documento
+                                Nuevo Documento
                             </h2>
                             <p class="mt-1 text-sm text-gray-600 dark:text-neutral-400">
-                                Complete los campos para crear una nueva solicitud de documento
+                                Complete los campos para crear un nuevo documento
                             </p>
                         </div>
 
@@ -188,7 +188,7 @@
                                         <polyline points="17 21 17 13 7 13 7 21" />
                                         <polyline points="7 3 7 8 15 8" />
                                     </svg>
-                                    Enviar Solicitud
+                                    Crear
                                 </button>
                             </div>
                         </form>
