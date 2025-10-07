@@ -2234,7 +2234,7 @@ class DocumentRequestController extends Controller
                 'message' => 'Error al obtener los líderes'
             ], 500);
         }
-    }
+}
 
     public function obsolete(Request $request, String $id){
 
@@ -2285,7 +2285,7 @@ class DocumentRequestController extends Controller
         return redirect()
                 ->route('documents.published')
                 ->with('success', self::MESSAGE_SUCCESS_OBSOLETE);
-    }catch(Exception $e){
+    }catch(\Exception $e){
 
         if (isset($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
