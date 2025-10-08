@@ -4,7 +4,8 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "serve": "npm run build && php artisan serve"
+        "serve": "npm run build && php artisan serve",
+        "clean": "php artisan config:clear && php artisan cache:clear"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.20",

@@ -54,7 +54,8 @@ Route::middleware('auth')->group(function () {
             'requests' => 'documentRequest'
         ]);
 
-        Route::patch('/requests/obsolete/{id}', [DocumentRequestController::class, 'obsolete'])->name('obsolete');
+        Route::patch('/requests/update-version/{id}', [DocumentRequestController::class, 'newVersion'])->name('update-version');
+        Route::patch('/requests/obsolete/{id}',[DocumentRequestController::class, 'obsolete'])->name('obsolete');
 
         // Vistas principales de documentos según su estado
         Route::get('/in-progress', [DocumentRequestController::class, 'inProgress'])

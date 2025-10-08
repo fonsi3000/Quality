@@ -390,20 +390,41 @@
                                         </div>
                                     </div>
 
-                                    <!-- Botón Obsoletizar -->
-                                    @can('admin.only')
-                                        <div>
-                                            <button type="button" data-hs-overlay="#modal-obsoletizar-{{ $request->id }}"
-                                                class="w-full inline-flex justify-center items-center gap-x-2 px-4 py-2 text-sm font-semibold rounded-lg border border-transparent bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 transition-colors">
-                                                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                </svg>
-                                                Obsoletizar Documento
-                                            </button>
-                                        </div>
-                                    @endcan
+                                    <!-- Boton publicar nueva version -->
+                                   @can('admin.only')
+    <div class="space-y-3">
+        <!-- Botón Publicar Nueva Versión -->
+        <div>
+            <button type="button" data-hs-overlay="#modal-obsoletizar-{{ $request->id }}"
+                class="w-full inline-flex justify-center items-center gap-x-2 px-4 py-3 text-sm font-semibold rounded-lg border-2 border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none dark:focus:ring-offset-gray-800 transition-all shadow-sm hover:shadow-md">
+                <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Publicar Nueva Versión
+            </button>
+        </div>
+
+        <!-- Botón Obsoletizar -->
+        <div>
+            <form action="{{ route('documents.obsolete', $request->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <button type="submit"
+                    onclick="return confirm('¿Está seguro de que desea obsoletizar este documento? Esta acción no se puede deshacer.')"
+                    class="w-full inline-flex justify-center items-center gap-x-2 px-4 py-3 text-sm font-semibold rounded-lg border-2 border-orange-500 bg-white text-orange-600 hover:bg-orange-50 hover:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-orange-600 dark:text-orange-400 dark:hover:bg-neutral-700 dark:focus:ring-offset-gray-800 transition-all shadow-sm hover:shadow-md">
+                    <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Obsoletizar Documento
+                </button>
+            </form>
+        </div>
+    </div>
+@endcan
                                 </div>
 
                                 <!-- Columna Derecha -->
@@ -770,7 +791,7 @@
             </div>
         @endforeach
 
-        <!-- Modales de Obsoletizar -->
+        <!-- Modal Nueva Version -->
         @foreach ($documentRequests as $request)
             <div id="modal-obsoletizar-{{ $request->id }}"
                 class="hs-overlay hidden w-full h-full fixed top-0 start-0 z-[70] overflow-x-hidden overflow-y-auto">
@@ -782,7 +803,7 @@
                         <!-- Header -->
                         <div class="flex justify-between items-center py-3 px-4 border-b dark:border-neutral-700">
                             <h3 class="font-bold text-gray-800 dark:text-white">
-                                Obsoletizar Documento
+                                Nueva Version
                             </h3>
                             <button type="button"
                                 class="inline-flex items-center justify-center size-8 text-sm font-semibold rounded-lg border border-transparent text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-gray-700"
@@ -797,29 +818,11 @@
                         </div>
 
                         <!-- Body -->
-                        <form action="{{ route('documents.obsolete', $request->id) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('documents.update-version', $request->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PATCH')
-                            
+                    
                             <div class="p-4 overflow-y-auto">
-                                <!-- Advertencia -->
-                                <div class="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg dark:bg-orange-900/20 dark:border-orange-800">
-                                    <div class="flex items-start gap-3">
-                                        <svg class="size-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" 
-                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-orange-800 dark:text-orange-300 mb-1">
-                                                Advertencia
-                                            </h4>
-                                            <p class="text-sm text-orange-700 dark:text-orange-400">
-                                                Esta acción marcará el documento como obsoleto. El documento ya no estará disponible para uso activo.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <!-- Información del documento -->
                                 <div class="mb-4 p-3 bg-gray-50 rounded-lg dark:bg-neutral-700">
@@ -861,7 +864,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M5 13l4 4L19 7" />
                                     </svg>
-                                    Confirmar Obsolescencia
+                                    Publicar Nueva Version
                                 </button>
                             </div>
                         </form>
