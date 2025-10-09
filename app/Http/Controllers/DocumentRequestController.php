@@ -2286,6 +2286,11 @@ class DocumentRequestController extends Controller
 public function newVersion(Request $request, String $id){
 try{
 
+        $validated = $request->validate([
+            "document" => 'required|file|max:102400|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip',
+            "description" => 'required|string|max:255'
+        ]);
+
         if (!Auth::user()->hasRole('admin')) {
             throw new \Exception('No tienes permiso para obsoletizar este documento');
         }
@@ -2306,7 +2311,7 @@ try{
 
         $documentRequestNew = new DocumentRequest();
         $documentRequestNew -> user_id = $documentRequest -> user_id;
-        $documentRequestNew -> description = $documentRequest -> description;
+        $documentRequestNew -> description = $validated['description'];
         $documentRequestNew -> process_id = $documentRequest -> process_id;
         $documentRequestNew -> origin = $documentRequest -> origin;
         $documentRequestNew -> assigned_agent_id = $documentRequest -> assigned_agent_id;
@@ -2316,6 +2321,10 @@ try{
         $documentRequestNew -> final_document_path = $path;
         $documentRequestNew -> status = DocumentRequest::STATUS_PUBLICADO;
         $documentRequestNew -> save();
+
+        $documentRequest -> update([
+            'status' => DocumentRequest::STATUS_OBSOLETO
+        ]);
 
         $documentRequest->save();
 

@@ -24,7 +24,7 @@
                         <line x1="12" y1="11" x2="12" y2="17" />
                         <line x1="9" y1="14" x2="15" y2="14" />
                     </svg>
-                    Nueva Solicitud
+                    Nuevo Documento
                 </a>
             </div>
         @endcan
@@ -342,18 +342,6 @@
                                                     {{ $request->assignedAgent?->name ?? 'No asignado' }}
                                                 </span>
                                             </div>
-
-                                            <!-- Aprobado por segundo líder -->
-                                            @if ($request->process?->second_leader_id)
-                                                <div class="flex items-center justify-between">
-                                                    <span
-                                                        class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado
-                                                        por segundo líder:</span>
-                                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                                        {{ $request->process?->secondLeader?->name ?? 'No asignado' }}
-                                                    </span>
-                                                </div>
-                                            @endif
                                         </div>
                                     </div>
 
@@ -406,13 +394,12 @@
             </button>
         </div>
 
-        <!-- Botón Obsoletizar -->
+        <!-- Boton Obsoletizar -->
         <div>
             <form action="{{ route('documents.obsolete', $request->id) }}" method="POST">
                 @csrf
                 @method('PATCH')
                 <button type="submit"
-                    onclick="return confirm('¿Está seguro de que desea obsoletizar este documento? Esta acción no se puede deshacer.')"
                     class="w-full inline-flex justify-center items-center gap-x-2 px-4 py-3 text-sm font-semibold rounded-lg border-2 border-orange-500 bg-white text-orange-600 hover:bg-orange-50 hover:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-orange-600 dark:text-orange-400 dark:hover:bg-neutral-700 dark:focus:ring-offset-gray-800 transition-all shadow-sm hover:shadow-md">
                     <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -847,6 +834,21 @@
                                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                         Formatos permitidos: PDF, DOC, DOCX. Tamaño máximo: 10MB
                                     </p>
+                                </div>
+                                <!-- Campo de observaciones -->
+                                <div class="mb-4">
+                                    <label for="obsolete_reason_{{ $request->id }}" 
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                                        Observaciones <span class="text-red-500">*</span>
+                                    </label>
+                                    <textarea 
+                                        name="description" 
+                                        id="description"
+                                        rows="4"
+                                        required
+                                        class="py-3 px-4 block w-full border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-400 dark:focus:ring-neutral-600"
+                                        placeholder="Observaciones..."></textarea>
+                                   
                                 </div>
                             </div>
 
