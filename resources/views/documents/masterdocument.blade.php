@@ -330,13 +330,6 @@
                                                     {{ $request->origin }}
                                                 </span>
                                             </div>
-                                            <div class="flex items-center justify-between">
-                                                <span
-                                                    class="text-sm font-medium text-gray-500 dark:text-gray-400">Destino:</span>
-                                                <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                                    {{ $request->destination }}
-                                                </span>
-                                            </div>
                                         </div>
                                     </div>
 
@@ -371,18 +364,6 @@
                                                     {{ $request->assignedAgent?->name ?? 'No asignado' }}
                                                 </span>
                                             </div>
-
-                                            <!-- Aprobado por segundo líder -->
-                                            @if ($request->process?->second_leader_id)
-                                                <div class="flex items-center justify-between">
-                                                    <span
-                                                        class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado
-                                                        por segundo líder:</span>
-                                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                                        {{ $request->process?->secondLeader?->name ?? 'No asignado' }}
-                                                    </span>
-                                                </div>
-                                            @endif
                                         </div>
                                     </div>
 
