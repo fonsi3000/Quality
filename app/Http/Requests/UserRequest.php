@@ -53,6 +53,24 @@ class UserRequest extends FormRequest
                 'exists:processes,id',
             ],
 
+            'third_process_id' => [
+                'nullable',
+                'different:process_id',
+                'exists:processes,id',
+            ],
+
+            'fourth_process_id' => [
+                'nullable',
+                'different:process_id',
+                'exists:processes,id',
+            ],
+
+            'fifth_process_id' => [
+                'nullable',
+                'different:process_id',
+                'exists:processes,id',
+            ],
+
             'position_id' => [
                 'nullable',
                 'exists:positions,id',

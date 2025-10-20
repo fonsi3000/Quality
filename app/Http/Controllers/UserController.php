@@ -23,7 +23,7 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $query = User::with(['unit', 'process', 'secondaryProcess', 'position', 'roles']);
+        $query = User::with(['unit', 'process', 'secondaryProcess','thirdProcess','fourthProcess','fifthProcess' ,'position', 'roles']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -85,12 +85,32 @@ class UserController extends Controller
 
         Log::info('Datos validados al crear usuario:', $validated);
 
+        $process_ids = [
+            "process_id",
+            "second_process_id",
+            "third_process_id",
+            "fourth_process_id",
+            "fifth_process_id"
+        ];
+
+        $someEqual = false;
+        foreach ($process_ids as $pid) {
+            foreach($process_ids as $pid2){
+            if ($pid != $pid2){
+                if(isset($validated[$pid]) && isset($validated[$pid2])){
+                    if ($validated[$pid] == $validated[$pid2]){
+                        $someEqual = true;
+                        break;
+                    }
+                }
+            }
+        }
+        }
+
         if (
-            $validated['process_id'] &&
-            isset($validated['second_process_id']) &&
-            $validated['process_id'] == $validated['second_process_id']
+            $someEqual
         ) {
-            return back()->withErrors(['second_process_id' => 'El segundo proceso no puede ser igual al primero.'])->withInput();
+            return back()->withErrors(['process_id' => 'Cada proceso debe ser diferente del anterior.'])->withInput();
         }
 
         if ($request->hasFile('profile_photo')) {
@@ -135,12 +155,32 @@ class UserController extends Controller
 
         Log::info('Datos validados al actualizar usuario:', array_merge(['user_id' => $user->id], $validated));
 
+        $process_ids = [
+            "process_id",
+            "second_process_id",
+            "third_process_id",
+            "fourth_process_id",
+            "fifth_process_id"
+        ];
+
+        $someEqual = false;
+        foreach ($process_ids as $pid) {
+            foreach($process_ids as $pid2){
+            if ($pid != $pid2){
+                if(isset($validated[$pid]) && isset($validated[$pid2])){
+                    if ($validated[$pid] == $validated[$pid2]){
+                        $someEqual = true;
+                        break;
+                    }
+                }
+            }
+        }
+        }
+
         if (
-            $validated['process_id'] &&
-            isset($validated['second_process_id']) &&
-            $validated['process_id'] == $validated['second_process_id']
+            $someEqual
         ) {
-            return back()->withErrors(['second_process_id' => 'El segundo proceso no puede ser igual al primero.'])->withInput();
+            return back()->withErrors(['process_id' => 'Cada proceso debe ser diferente del anterior.'])->withInput();
         }
 
         if ($request->hasFile('profile_photo')) {

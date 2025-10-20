@@ -1533,6 +1533,9 @@ class DocumentRequestController extends Controller
                             ->orWhereIn('process_id', [
                                 Auth::user()->process_id,
                                 Auth::user()->second_process_id,
+                                Auth::user()->third_process_id,
+                                Auth::user()->fourth_process_id,
+                                Auth::user()->fifth_process_id
                             ]);
                     });
             }

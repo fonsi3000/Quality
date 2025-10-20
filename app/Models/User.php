@@ -19,6 +19,9 @@ class User extends Authenticatable
         'unit_id',
         'process_id',
         'second_process_id',
+        'third_process_id',
+        'fourth_process_id',
+        'fifth_process_id',
         'position_id',
         'active',
         'department'
@@ -55,6 +58,21 @@ class User extends Authenticatable
     public function secondaryProcess()
     {
         return $this->belongsTo(Process::class, 'second_process_id');
+    }
+
+    public function thirdProcess()
+    {
+        return $this->belongsTo(Process::class, 'third_process_id');
+    }
+
+    public function fourthProcess()
+    {
+        return $this->belongsTo(Process::class, 'fourth_process_id');
+    }
+
+    public function fifthProcess()
+    {
+        return $this->belongsTo(Process::class, 'fifth_process_id');
     }
 
     public function position()

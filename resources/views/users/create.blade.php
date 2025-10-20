@@ -116,27 +116,32 @@
                     @enderror
                 </div>
 
-                <div class="sm:col-span-3">
-                    <label for="second_process_id" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
-                        Segundo proceso (opcional)
-                    </label>
-                </div>
-                
-                <div class="sm:col-span-9">
-                    <select id="second_process_id" name="second_process_id" 
-                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600 @error('second_process_id') border-red-500 @enderror">
-                        <option value="">Seleccione un segundo proceso</option>
-                        @foreach($processes as $process)
-                            <option value="{{ $process->id }}" {{ old('second_process_id') == $process->id ? 'selected' : '' }}>
-                                {{ $process->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('second_process_id')
-                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
-                    @enderror
-                </div>
+            </div>
+            <!-- End Grid -->
 
+            <!-- Contenedor para procesos adicionales -->
+            <div id="additional-processes-container" class="grid sm:grid-cols-12 gap-2 sm:gap-6 mt-2"></div>
+
+            <!-- Botón para agregar más procesos -->
+            <div class="grid sm:grid-cols-12 gap-2 sm:gap-6 mt-2">
+                <div class="sm:col-span-3"></div>
+                <div class="sm:col-span-9">
+                    <button type="button" 
+                            id="add-process-btn"
+                            class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Agregar proceso adicional
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 dark:text-neutral-400">
+                        Puede agregar hasta 4 procesos adicionales
+                    </p>
+                </div>
+            </div>
+
+            <!-- Grid para campos siguientes -->
+            <div class="grid sm:grid-cols-12 gap-2 sm:gap-6 mt-2">
                 <div class="sm:col-span-3">
                     <label for="position_id" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
                         Cargo
@@ -245,4 +250,118 @@
         </form>
     </div>
 </div>
+
+<script>
+// Script para la vista de CREAR usuario
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('add-process-btn');
+    const container = document.getElementById('additional-processes-container');
+    const maxAdditionalProcesses = 4; // Máximo de campos adicionales (2, 3, 4, 5)
+    
+    const processNames = {
+        2: 'Segundo proceso',
+        3: 'Tercer proceso',
+        4: 'Cuarto proceso',
+        5: 'Quinto proceso'
+    };
+
+    const processIds = {
+        2: 'second_process_id',
+        3: 'third_process_id',
+        4: 'fourth_process_id',
+        5: 'fifth_process_id'
+    };
+
+    function addProcessField(processNum) {
+        const processId = processIds[processNum];
+        const processLabel = processNames[processNum];
+
+        const processHtml = `
+            <div class="sm:col-span-3 process-field" data-process="${processNum}">
+                <label for="${processId}" class="inline-block text-sm text-gray-800 mt-2.5 dark:text-neutral-200">
+                    ${processLabel}
+                </label>
+            </div>
+            
+            <div class="sm:col-span-9 process-field" data-process="${processNum}">
+                <div class="flex gap-2">
+                    <select id="${processId}" name="${processId}" 
+                            class="py-2 px-3 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600">
+                        <option value="">Seleccione un proceso</option>
+                        @foreach($processes as $process)
+                            <option value="{{ $process->id }}">{{ $process->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" 
+                            class="remove-process-btn py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-red-200 bg-white text-red-600 shadow-sm hover:bg-red-50 dark:bg-neutral-800 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900"
+                            data-process="${processNum}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', processHtml);
+        updateButtonVisibility();
+        attachRemoveListeners();
+    }
+
+    function attachRemoveListeners() {
+        document.querySelectorAll('.remove-process-btn').forEach(btn => {
+            // Remover listeners anteriores clonando el elemento
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', function() {
+                const processNum = this.getAttribute('data-process');
+                
+                // Remover los campos visibles
+                const fieldsToRemove = document.querySelectorAll(`[data-process="${processNum}"]`);
+                fieldsToRemove.forEach(field => field.remove());
+                
+                updateButtonVisibility();
+            });
+        });
+    }
+
+    function updateButtonVisibility() {
+        // Contar cuántos campos de proceso adicionales están visibles
+        const visibleProcesses = new Set();
+        document.querySelectorAll('.process-field[data-process]').forEach(field => {
+            visibleProcesses.add(field.getAttribute('data-process'));
+        });
+        
+        const visibleCount = visibleProcesses.size;
+        
+        // Ocultar el botón si ya hay 4 procesos adicionales
+        if (visibleCount >= maxAdditionalProcesses) {
+            addBtn.style.display = 'none';
+        } else {
+            addBtn.style.display = 'inline-flex';
+        }
+    }
+
+    addBtn.addEventListener('click', function() {
+        // Contar procesos actuales
+        const existingProcesses = new Set();
+        document.querySelectorAll('.process-field[data-process]').forEach(field => {
+            existingProcesses.add(parseInt(field.getAttribute('data-process')));
+        });
+        
+        if (existingProcesses.size < maxAdditionalProcesses) {
+            // Encontrar el siguiente número de proceso disponible (2, 3, 4, 5)
+            let nextProcess = 2;
+            while (nextProcess <= 5) {
+                if (!existingProcesses.has(nextProcess)) {
+                    addProcessField(nextProcess);
+                    break;
+                }
+                nextProcess++;
+            }
+        }
+    });
+});
+</script>
 @endsection

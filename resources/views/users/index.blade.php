@@ -297,6 +297,24 @@
                                 {{ $user->secondaryProcess?->name ?? 'No asignado' }}
                             </p>
                         </div>
+                        <div>
+                            <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Tercer Proceso</h5>
+                            <p class="mt-1 text-sm text-gray-800 dark:text-neutral-200">
+                                {{ $user->thirdProcess?->name ?? 'No asignado' }}
+                            </p>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Cuarto Proceso</h5>
+                            <p class="mt-1 text-sm text-gray-800 dark:text-neutral-200">
+                                {{ $user->fourthProcess?->name ?? 'No asignado' }}
+                            </p>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Quinto Proceso</h5>
+                            <p class="mt-1 text-sm text-gray-800 dark:text-neutral-200">
+                                {{ $user->fifthProcess?->name ?? 'No asignado' }}
+                            </p>
+                        </div>
                     </div>
 
                     <div>
