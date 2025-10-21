@@ -16,18 +16,18 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SsoController;
 use Illuminate\Support\Facades\Redirect;
 
-// Ruta principal
-// Route::get('/', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
-// Ruta principal
-Route::get('/', function () {
-    return view('welcome');
-});
+
+Route::get('/', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
+
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 Route::get('/sso-login', [SsoController::class, 'handle']);
 
-// Route::any('/login', function (Request $request) {
-//     return Redirect::away('https://app.espumasmedellin-litoral.com/dashboard');
-// });
+Route::any('/login', function (Request $request) {
+    return Redirect::away('https://app.espumasmedellin-litoral.com/dashboard');
+});
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
@@ -55,7 +55,7 @@ Route::middleware('auth')->group(function () {
         ]);
 
         Route::patch('/requests/update-version/{id}', [DocumentRequestController::class, 'newVersion'])->name('update-version');
-        Route::patch('/requests/obsolete/{id}',[DocumentRequestController::class, 'obsolete'])->name('obsolete');
+        Route::patch('/requests/obsolete/{id}', [DocumentRequestController::class, 'obsolete'])->name('obsolete');
 
         // Vistas principales de documentos según su estado
         Route::get('/in-progress', [DocumentRequestController::class, 'inProgress'])
