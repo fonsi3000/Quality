@@ -34,7 +34,7 @@
                         <!-- Logo -->
                         <div class="flex items-center justify-center mb-4">
                             <a href="#" class="flex items-center">
-                                <img src="{{ asset('images/logo.png') }}" class="h-16 w-auto" alt="Logo">
+                                <img src="{{ asset('images/logos.png') }}" class="h-16 w-auto" alt="Logo">
                             </a>
                         </div>
 
@@ -108,7 +108,7 @@
                 <!-- Logo -->
                 <div class="flex items-center justify-center mb-4">
                     <a href="#" class="flex items-center">
-                        <img src="{{ asset('images/logo.png') }}" class="h-16 w-auto" alt="Logo">
+                        <img src="{{ asset('images/logos.png') }}" class="h-16 w-auto" alt="Logo">
                     </a>
                 </div>
                 <button type="button" 

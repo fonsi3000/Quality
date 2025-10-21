@@ -35,7 +35,7 @@
                             <a class="flex-none rounded-xl text-xl inline-block font-semibold focus:outline-none focus:opacity-80"
                                 href="#"
                                 aria-label="Qualy">
-                                <img src="{{ asset('images/logo.png') }}"
+                                <img src="{{ asset('images/logos.png') }}"
                                     alt="Qualy Logo"
                                     class="w-40 md:w-48 lg:w-56 h-auto object-contain">
                             </a>

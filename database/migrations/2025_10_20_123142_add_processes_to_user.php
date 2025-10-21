@@ -35,7 +35,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('user', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['third_process_id']);
             $table->dropColumn('third_process_id');
             $table->dropForeign(['fourth_process_id']);
