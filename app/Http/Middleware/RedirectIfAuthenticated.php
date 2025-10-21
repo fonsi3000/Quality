@@ -22,10 +22,13 @@ class RedirectIfAuthenticated
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
                 // Si el usuario está autenticado, redirige al dashboard
+
+                $route = Auth::user()->hasRole(['admin']) ? "/dashboard" : "/documents/published";
+
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Ya estás autenticado.'], 200);
                 }
-                return redirect('/dashboard');
+                return redirect($route);
             }
         }
 
