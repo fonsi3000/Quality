@@ -47,10 +47,13 @@ class SsoController extends Controller
 
             Auth::login($user);
 
-            // 2) regenera la sesión
             $request->session()->regenerate();
 
-            return redirect()->route('dashboard');
+            $redirectTo = $user->hasRole(['admin'])
+                ? route('dashboard')
+                : route('documents.published');
+
+            return redirect($redirectTo);
         } catch (Exception $e) {
             return redirect()->away("{$frontendUrl}/dashboard?auth_error=invalid_token");
         }
