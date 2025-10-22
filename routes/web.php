@@ -17,17 +17,18 @@ use App\Http\Controllers\SsoController;
 use Illuminate\Support\Facades\Redirect;
 
 
-Route::get('/', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
+// Route::get('/', fn() => redirect()->away('https://app.espumasmedellin-litoral.com/dashboard'));
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::get('/', function () {
+    return view('welcome');
+});
 
 Route::get('/sso-login', [SsoController::class, 'handle']);
 
-Route::any('/login', function (Request $request) {
-    return Redirect::away('https://app.espumasmedellin-litoral.com/dashboard');
-});
+// Route::any('/login', function (Request $request) {
+//     return Redirect::away('https://app.espumasmedellin-litoral.com/dashboard');
+// });
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
