@@ -2239,7 +2239,7 @@ class DocumentRequestController extends Controller
         }
 }
 
-    public function obsolete(String $id){
+    public function obsolete(String $id, Request $request){
 
         try{
 
@@ -2257,8 +2257,13 @@ class DocumentRequestController extends Controller
             throw new \Exception('El documento que intentas obsoletizar no esta publicado');
         }
         
+        $validated = $request->validate([
+            'observations' => 'required|string|max:255'
+        ]);
+
         $documentRequest -> update([
-            'status' => DocumentRequest::STATUS_OBSOLETO
+            'status' => DocumentRequest::STATUS_OBSOLETO,
+            'observations' => $validated['observations']
         ]);
 
         $documentRequest->save();
