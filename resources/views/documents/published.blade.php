@@ -824,7 +824,7 @@
                                     <input type="file" 
                                         name="document" 
                                         id="document_{{ $request->id }}"
-                                        accept=".pdf,.doc,.docx"
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.zip"
                                         required
                                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/50 dark:file:text-blue-400">
                                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
